@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>836</width>
+    <height>618</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>EyeLab</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout"/>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>836</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <widget class="QMenu" name="menuUpload">
+     <property name="title">
+      <string>Import</string>
+     </property>
+     <addaction name="actionImportVol"/>
+     <addaction name="actionImportHEXML"/>
+     <addaction name="separator"/>
+     <addaction name="actionImportBSFolder"/>
+    </widget>
+    <addaction name="separator"/>
+    <addaction name="menuUpload"/>
+    <addaction name="actionSave"/>
+    <addaction name="separator"/>
+   </widget>
+   <widget class="QMenu" name="menuEdit">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
+    <property name="tearOffEnabled">
+     <bool>false</bool>
+    </property>
+    <property name="title">
+     <string/>
+    </property>
+    <addaction name="actionUndo"/>
+    <addaction name="actionRedo"/>
+   </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+    <addaction name="actionIntroduction"/>
+    <addaction name="actionLayerAnnotationGuide"/>
+    <addaction name="actionAreaAnnotationGuide"/>
+    <addaction name="actionRegistrationGuide"/>
+    <addaction name="separator"/>
+    <addaction name="actionShortcutSheet"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuEdit"/>
+   <addaction name="menuHelp"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionSave_as">
+   <property name="text">
+    <string>Save as</string>
+   </property>
+  </action>
+  <action name="actionOpen_Project">
+   <property name="text">
+    <string>Open Project</string>
+   </property>
+  </action>
+  <action name="action_vol">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>HE raw Export (.vol )</string>
+   </property>
+  </action>
+  <action name="actionToggle2D">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>2D Viewer</string>
+   </property>
+  </action>
+  <action name="actionToggle3D">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>3D Viewer</string>
+   </property>
+  </action>
+  <action name="actionToogleToolbox">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Toolbox</string>
+   </property>
+  </action>
+  <action name="actionUndo">
+   <property name="checkable">
+    <bool>false</bool>
+   </property>
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/icons/icons/baseline-undo-24px.svg</normaloff>:/icons/icons/baseline-undo-24px.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Undo</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Z</string>
+   </property>
+  </action>
+  <action name="actionRedo">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/icons/icons/baseline-redo-24px.svg</normaloff>:/icons/icons/baseline-redo-24px.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Redo</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Y</string>
+   </property>
+  </action>
+  <action name="action_cfp">
+   <property name="text">
+    <string>CFP (.bmp/.tif/.jpg)</string>
+   </property>
+  </action>
+  <action name="actionExport">
+   <property name="text">
+    <string>Export</string>
+   </property>
+  </action>
+  <action name="actionImportVol">
+   <property name="text">
+    <string>Heyex Raw (.vol)</string>
+   </property>
+  </action>
+  <action name="actionImportCfp">
+   <property name="text">
+    <string>CFP</string>
+   </property>
+  </action>
+  <action name="actionSave">
+   <property name="text">
+    <string>Save</string>
+   </property>
+  </action>
+  <action name="actionImportHEXML">
+   <property name="text">
+    <string>Heyex XML (.xml)</string>
+   </property>
+  </action>
+  <action name="actionImportBSFolder">
+   <property name="text">
+    <string>B-Scans from folder</string>
+   </property>
+  </action>
+  <action name="actionLayerAnnotationGuide">
+   <property name="text">
+    <string>Layer Annotation Guide</string>
+   </property>
+  </action>
+  <action name="actionAreaAnnotationGuide">
+   <property name="text">
+    <string>Area Annotation Guide</string>
+   </property>
+  </action>
+  <action name="actionRegistrationGuide">
+   <property name="text">
+    <string>Registration Guide</string>
+   </property>
+  </action>
+  <action name="actionShortcutSheet">
+   <property name="text">
+    <string>Shortcut Sheet</string>
+   </property>
+  </action>
+  <action name="actionImportNir">
+   <property name="text">
+    <string>NIR</string>
+   </property>
+  </action>
+  <action name="actionIntroduction">
+   <property name="text">
+    <string>Introduction</string>
+   </property>
+  </action>
+ </widget>
+ <resources>
+  <include location="resources.qrc"/>
+ </resources>
+ <connections/>
+</ui>

@@ -1,0 +1,33 @@
+<RCC>
+  <qresource prefix="icons">
+    <file>icons/path-tool.svg</file>
+    <file>icons/navigation.svg</file>
+    <file>icons/bxs-magic-wand.svg</file>
+    <file>icons/lasso.svg</file>
+    <file>icons/eraser.svg</file>
+    <file>icons/baseline-navigate-next-24px.svg</file>
+    <file>icons/baseline-navigate-before-24px.svg</file>
+    <file>icons/baseline-filter-none-24px.svg</file>
+    <file>icons/ic_open_in_new_black_48dp_1x.png</file>
+    <file>icons/ic_insert_drive_file_black_48dp_1x.png</file>
+    <file>icons/ic_help_black_48dp_1x.png</file>
+    <file>icons/baseline-visibility_off-24px.svg</file>
+    <file>icons/baseline-visibility-24px.svg</file>
+    <file>icons/baseline-undo-24px.svg</file>
+    <file>icons/baseline-settings-20px.svg</file>
+    <file>icons/baseline-save-24px.svg</file>
+    <file>icons/baseline-redo-24px.svg</file>
+    <file>icons/baseline-edit-24px.svg</file>
+    <file>icons/baseline-delete-24px.svg</file>
+    <file>icons/baseline-arrow_upward-24px.svg</file>
+    <file>icons/baseline-arrow_downward-24px.svg</file>
+    <file>icons/baseline-add_circle-24px.svg</file>
+  </qresource>
+  <qresource prefix="cursors">
+    <file>cursors/path_cursor.svg</file>
+    <file>cursors/navigation_cursor.svg</file>
+    <file>cursors/pen_cursor.svg</file>
+    <file>cursors/inspection_cursor_vertical.jpeg</file>
+    <file>cursors/inspection_cursor.jpeg</file>
+  </qresource>
+</RCC>
