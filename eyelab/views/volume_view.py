@@ -4,7 +4,6 @@ from PySide6.QtCore import QPointF
 from eyepy import EyeVolume
 
 from eyelab.views.graphicsview import CustomGraphicsView
-from eyelab.models.scene import CustomGraphicsScene
 from eyelab.models.scene import Point, Line
 from eyelab.models.viewtab import VolumeTab
 import numpy as np
@@ -15,62 +14,27 @@ logger = logging.getLogger("eyelab.volumeview")
 
 
 class VolumeView(CustomGraphicsView):
-    cursorPosChanged = QtCore.Signal(QtCore.QPointF, CustomGraphicsView)
-    sceneChanged = QtCore.Signal()
-
     def __init__(self, parent, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
-        self.current_slice = None
-        self._bscan_scenes = {}
-        self.setTransformationAnchor(QtWidgets.QGraphicsView.AnchorUnderMouse)
-
         self.data = None
-
         self._lines = None
 
-    @property
-    def bscan_scene(self) -> CustomGraphicsScene:
-        if not self.current_slice in self._bscan_scenes:
-            # Create GraphicsScene if not yet created
-            scene = CustomGraphicsScene(parent=self, data=self.data[self.current_slice])
-            # Set Annotations managed by the ViewTab
-            scene.addItem(self.view_tab.model.root_item)
-            scene.toolChanged.connect(self.update_tool)
-            self._bscan_scenes[self.current_slice] = scene
+        self.setTransformationAnchor(QtWidgets.QGraphicsView.AnchorUnderMouse)
 
-        return self._bscan_scenes[self.current_slice]
+    def reset(self):
+        self.data = None
+        self._lines = None
 
     def set_data(self, data: EyeVolume, name: str = "Volume"):
         logger.debug("VolumeView: set_data")
+        self.reset()
         self.data = data
         self.name = name
-        self.current_slice = 0
-        self.view_tab = VolumeTab(self.data)
-
-        self.setScene(self.bscan_scene)
+        self.view_tab = VolumeTab(self.data, parent=self)
+        self.setScene(self.view_tab.model.scene)
 
         self.zoomToFit()
         logger.debug("VolumeView: data is set")
-
-    def set_current_scene(self):
-        if self.tool.paint_preview.scene() == self.scene():
-            self.scene().removeItem(self.tool.paint_preview)
-        self.setScene(self.bscan_scene)
-        if not self.scene().mouseGrabberItem() is None:
-            self.tool.paint_preview.setParentItem(self.scene().mouseGrabberItem())
-
-        self.view_tab.set_slice(self.current_slice)
-        self.sceneChanged.emit()
-
-    def next_slice(self):
-        if self.current_slice < len(self.data) - 1:
-            self.current_slice += 1
-            self.set_current_scene()
-
-    def last_slice(self):
-        if self.current_slice > 0:
-            self.current_slice -= 1
-            self.set_current_scene()
 
     def map_to_localizer(self, pos):
         # x = StartX + xpos
@@ -89,7 +53,8 @@ class VolumeView(CustomGraphicsView):
 
     def map_from_localizer(self, pos):
         lclzr_scale_x = self.data.localizer.scale_x
-        x = pos.x() - self.data[self.current_slice].meta["start_pos"][0] / lclzr_scale_x
+        current_slice = self.view_tab.model.current_slice
+        x = pos.x() - self.data[current_slice].meta["start_pos"][0] / lclzr_scale_x
         y = self.closest_slice(pos)
         return QPointF(x, y)
 
@@ -99,8 +64,8 @@ class VolumeView(CustomGraphicsView):
         # set slice
 
         if self.linked_navigation:
-            self.current_slice = int(pos.y())
-            self.set_current_scene()
+            self.view_tab.model.current_slice = int(pos.y())
+            self.setScene(self.view_tab.model.scene)
             self.centerOn(pos)
 
         current_center = self.mapToScene(self.rect().center()).y()
@@ -115,16 +80,19 @@ class VolumeView(CustomGraphicsView):
     def wheelEvent(self, event):
         if event.modifiers() == (QtCore.Qt.ControlModifier):
             if event.angleDelta().y() > 0:
-                self.next_slice()
+                self.view_tab.next_slice()
             else:
-                self.last_slice()
+                self.view_tab.last_slice()
+            self.setScene(self.view_tab.model.scene)
 
-            pos_on_localizer = self.map_to_localizer(
-                QPointF(
-                    self.mapToScene(event.position().toPoint()).x(), self.current_slice
+            if self.linked_navigation:
+                current_slice = self.view_tab.model.current_slice
+                pos_on_localizer = self.map_to_localizer(
+                    QPointF(
+                        self.mapToScene(event.position().toPoint()).x(), current_slice
+                    )
                 )
-            )
-            self.cursorPosChanged.emit(pos_on_localizer, self)
+                self.cursorPosChanged.emit(pos_on_localizer, self)
             event.accept()
         else:
 
@@ -133,10 +101,9 @@ class VolumeView(CustomGraphicsView):
     def mouseMoveEvent(self, event):
         super().mouseMoveEvent(event)
         scene_pos = self.mapToScene(event.pos())
-        if self.tool.paint_preview.scene() == self.scene():
-            self.tool.paint_preview.setPos(scene_pos.toPoint())
+        current_slice = self.view_tab.model.current_slice
         localizer_pos = self.map_to_localizer(
-            QtCore.QPointF(scene_pos.x(), self.current_slice)
+            QtCore.QPointF(scene_pos.x(), current_slice)
         )
         self.cursorPosChanged.emit(localizer_pos, self)
 

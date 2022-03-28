@@ -27,9 +27,10 @@ class Workspace(QWidget, Ui_WorkspaceView):
 
         self.ctrl_key_actions = {
             QtCore.Qt.Key_X: self.toggle_linked_navigation,
-            QtCore.Qt.Key_A: self.toggle_all_annotations,
-            QtCore.Qt.Key_1: self.select_tool_0,
-            QtCore.Qt.Key_2: self.select_tool_1,
+            # QtCore.Qt.Key_A: self.toggle_all_annotations,
+            # QtCore.Qt.Key_1: self.select_tool_0,
+            # QtCore.Qt.Key_2: self.select_tool_1,
+            QtCore.Qt.Key_S: self.parentWidget().actionSave.trigger,
         }
 
         self.graphic_views = [
@@ -39,6 +40,9 @@ class Workspace(QWidget, Ui_WorkspaceView):
 
         self.linked_navigation = False
         self.annotations_visible = True
+
+        self.data = None
+        self.data_changed = False
 
     def set_data(self, data: ep.EyeVolume):
         logger.debug("Workspace: set_data")
@@ -50,8 +54,6 @@ class Workspace(QWidget, Ui_WorkspaceView):
         self.layerOverview.addTab(
             self.data_view.graphicsViewLocalizer.view_tab, "Localizer"
         )
-        # self.layerOverview.currentChanged.connect(
-        #    lambda index: self.layerOverview.widget(index).scene.setFocus() if index != -1 else None)
         self.layerOverview.repaint()
 
     @property
@@ -70,14 +72,8 @@ class Workspace(QWidget, Ui_WorkspaceView):
                 view.link_navigation()
 
     def toggle_all_annotations(self):
-        if self.annotations_visible:
-            self.annotations_visible = False
-            for i in range(self.layerOverview.count()):
-                self.layerOverview.widget(i).model.hide()
-        else:
-            self.annotations_visible = True
-            for i in range(self.layerOverview.count()):
-                self.layerOverview.widget(i).model.show()
+        for i in range(self.layerOverview.count()):
+            self.layerOverview.widget(i).model.toggle_annotations()
 
     def select_tool_0(self):
         self.select_tool(0)

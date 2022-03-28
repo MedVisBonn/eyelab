@@ -61,7 +61,7 @@
     </layout>
    </item>
    <item>
-    <widget class="QTreeView" name="ImageTreeView">
+    <widget class="QTreeView" name="imageTreeView">
      <property name="selectionMode">
       <enum>QAbstractItemView::SingleSelection</enum>
      </property>
@@ -94,6 +94,9 @@
      </item>
      <item>
       <widget class="QToolButton" name="upButton">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
        <property name="toolTip">
         <string>Move selected layer up</string>
        </property>

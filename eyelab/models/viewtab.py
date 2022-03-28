@@ -5,11 +5,14 @@ from PySide6.QtWidgets import QWidget
 
 from eyelab.models.treeitemdelegate import TreeItemDelegate
 
-# from eyelab.dialogs import AddAnnotationDialog
+
 from eyelab.views.ui.ui_scene_tab import Ui_SceneTab
-from eyelab.models.treeview.itemmodel import BscanTreeItemModel, EnfaceTreeItemModel
-from eyelab.models.treeview.lineitem import TreeLineItem
-from eyelab.models.treeview.areaitem import TreeAreaItem
+from eyelab.models.treeview.itemmodel import (
+    VolumeTreeItemModel,
+    EnfaceTreeItemModel,
+    TreeItemModel,
+    TreeItem,
+)
 from eyelab.tools import line_tools, area_tools, basic_tools
 
 import json
@@ -24,43 +27,53 @@ class ViewTab(QWidget, Ui_SceneTab):
     def __init__(self, data, parent=None):
         super().__init__(parent)
         self.setupUi(self)
-
         self.data = data
-
-        self.addButton.clicked.connect(self.add_annotation_layer)
-        self.deleteButton.clicked.connect(self.remove_annotation_layer)
-        self.upButton.clicked.connect(self.layer_up)
-        self.downButton.clicked.connect(self.layer_down)
-
-        self.opacitySlider.valueChanged.connect(self.set_opacity)
+        self.model: TreeItemModel = None
 
         self.line_tools = line_tools()
         self.area_tools = area_tools()
         self.basic_tools = basic_tools()
-        # self.setTools(self.basic_tools)
 
-    @property
-    def scene(self):
-        return self.model.root_item.scene()
+        self.upButton.clicked.connect(self.layer_up)
+        self.downButton.clicked.connect(self.layer_down)
+        self.downButton.clicked.connect(self.layer_down)
+        self.opacitySlider.valueChanged.connect(self.set_opacity)
+
+        # Todo: Fix bugs to enable featuress
+        self.opacitySliderLabel.hide()
+        self.opacitySlider.hide()
+        self.upButton.hide()
+        self.downButton.hide()
+
+        self.current_tool = None
+        self.setTools(self.basic_tools)
+
+    def set_model(self, model: TreeItemModel):
+        self.model = model
+        self.addButton.clicked.connect(self._add_annotation)
+        self.deleteButton.clicked.connect(self._remove_annotation)
+
+    def _remove_annotation(self):
+        index = self.imageTreeView.selectionModel().currentIndex()
+        self.model.remove_annotation(index)
+
+    def _add_annotation(self):
+        self.model.add_annotation()
 
     def configure_imageTreeView(self):
-        self.ImageTreeView.setModel(self.model)
-        self.ImageTreeView.header().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        self.imageTreeView.setModel(self.model)
+        self.imageTreeView.header().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
         for col in range(1, self.model.columnCount()):
-            self.ImageTreeView.hideColumn(col)
-        self.ImageTreeView.setHeaderHidden(True)
-        self.ImageTreeView.setItemDelegate(TreeItemDelegate(self.ImageTreeView))
-        self.ImageTreeView.setRootIsDecorated(False)
-        self.ImageTreeView.selectionModel().currentRowChanged.connect(
+            self.imageTreeView.hideColumn(col)
+        self.imageTreeView.setHeaderHidden(True)
+        self.imageTreeView.setItemDelegate(TreeItemDelegate(self.imageTreeView))
+        self.imageTreeView.setRootIsDecorated(False)
+
+        self.imageTreeView.selectionModel().currentRowChanged.connect(
             self.on_currentChanged
         )
-        self.ImageTreeView.expandAll()
 
-    @property
-    def current_item(self):
-        model_index = self.ImageTreeView.selectionModel().currentIndex()
-        item = self.model.getItem(model_index)
-        return item
+        self.imageTreeView.expandAll()
 
     def tools(self):
         return self._tools
@@ -98,16 +111,21 @@ class ViewTab(QWidget, Ui_SceneTab):
             self.optionsWidget = tool.options_widget
             self.toolboxWidget.repaint()
 
-            self.scene.current_tool = tool
+            self.current_tool = tool
             tool.enable()
+
+            # if self.tool.paint_preview.scene() == self.scene():
+            #    self.scene().removeItem(self.tool.paint_preview)
+            # self.tool.paint_preview.setParentItem(
+            #    self.scene().activePanel())
 
         return func
 
     def set_opacity(self, value):
-        self.model.root_item.setOpacity(value / 100)
+        self.model.tree_root.setOpacity(value / 100)
 
     def layer_up(self):
-        selected = self.ImageTreeView.selectionModel().currentIndex()
+        selected = self.imageTreeView.selectionModel().currentIndex()
 
         parent = selected.parent()
         row1 = selected.row()
@@ -115,142 +133,80 @@ class ViewTab(QWidget, Ui_SceneTab):
 
         if 0 < row1 <= parent.internalPointer().childCount():
             self.model.switchRows(row2, row1, parent)
-            # self.ImageTreeView.selectionModel().currentRowChanged.emit(
+            # self.imageTreeView.selectionModel().currentRowChanged.emit(
             #    self.model.index(row1, 0, parent),
             #    self.model.index(row2, 0, parent))
 
     def layer_down(self):
-        selected = self.ImageTreeView.selectionModel().currentIndex()
+        selected = self.imageTreeView.selectionModel().currentIndex()
 
         parent = selected.parent()
-        row1 = selected.row()
-        row2 = row1 + 1
+        source_row = selected.row()
+        target_row = source_row + 1
 
-        if 0 <= row1 < parent.internalPointer().childCount() - 1:
-            self.model.switchRows(row1, row2, parent)
-            # self.ImageTreeView.selectionModel().currentRowChanged.emit(
+        if 0 <= source_row < parent.internalPointer().childCount() - 1:
+            self.model.switchRows(source_row, target_row, parent)
+            # self.imageTreeView.selectionModel().currentRowChanged.emit(
             #    self.model.index(row1, 0, parent),
             #    self.model.index(row2, 0, parent))
 
-    def add_annotation_layer(self):
-        tab_widget = self.parent().parent()
-        dialog = AddAnnotationDialog(tab_widget)
-        if dialog.exec_() == QtWidgets.QDialog.Accepted:
-            self.model.layoutChanged.emit()
-            self.scene.update()
-
-    def remove_annotation_layer(self):
-        index = self.ImageTreeView.selectionModel().currentIndex()
-        if index.isValid():
-            self.model.layoutAboutToBeChanged.emit()
-            self.model.removeRows(index.row(), 1, index.parent())
-            self.model.layoutChanged.emit()
-            self.scene.update()
-
     @QtCore.Slot("QModelIndex", "QModelIndex")
     def on_currentChanged(self, current, previous):
-        current = self.model.getItem(current)
-        previous = self.model.getItem(previous)
+        current_tree_item = self.model.getItem(current)
+        previous_tree_item = self.model.getItem(previous)
 
         # Change activated item
-        previous.setActive(False)
-        current.setActive(True)
-        previous.ungrabMouse()
-        current.grabMouse()
+        self.model.activate(current)
+        self.model.deactivate(previous)
+        # previous.ungrabMouse()
+        # current.grabMouse()
 
         # Set tools for current item
-        if issubclass(type(current), TreeLineItem):
+        if current_tree_item.parent.data("name") == "Layers":
+            self.line_tools["spline"].options_widget.set_data(
+                current_tree_item.itemData
+            )
             self.setTools(self.line_tools, default="spline")
-            if issubclass(type(previous), TreeLineItem):
-                if previous.control_points_visible:
-                    current.show_control_points()
-                else:
-                    current.hide_control_points()
-        elif issubclass(type(current), TreeAreaItem):
+        elif current_tree_item.parent.data("name") == "Areas":
             self.setTools(self.area_tools, default="pen")
 
 
 class VolumeTab(ViewTab):
     def __init__(self, data: ep.EyeVolume, parent=None):
         super().__init__(data, parent)
-        self.current_slice = 0
-        self.meta = {}
-        self.models = collections.defaultdict(
-            lambda: BscanTreeItemModel(data=self.data[self.current_slice], parent=self)
-        )
-
+        self.set_model(VolumeTreeItemModel(data=data, parent=self))
         self.configure_imageTreeView()
 
+    def next_slice(self):
+        self.model.next_slice(self.current_tool)
+        self.model.scene.addItem(self.current_tool.paint_preview)
+
+    def last_slice(self):
+        self.model.last_slice(self.current_tool)
+        self.model.scene.addItem(self.current_tool.paint_preview)
+
     @property
-    def model(self):
-        return self.models[self.current_slice]
-
-    def set_slice(self, index: int):
-        self.current_slice = index
-        self.ImageTreeView.setModel(self.model)
-        self.ImageTreeView.expandAll()
-
-    def add_line_annotation(self, data):
-        new_item = TreeLineItem.create(data, shape=self.model.scene.shape)
-        self.model.appendRow(new_item, parent=QtCore.QModelIndex(self.model.line_index))
-
-    def remove_annotation_layer(self):
-        index = self.ImageTreeView.selectionModel().currentIndex()
-        if index.isValid():
-            self.model.layoutAboutToBeChanged.emit()
-            self.model.removeRows(index.row(), 1, index.parent())
-            self.model.layoutChanged.emit()
-            self.scene.update()
-
-    def compute_idealRPE(self):
-        try:
-            rpe_height = self.ImageTreeView.model().get_layer_height("RPE")
-            bm_height = self.ImageTreeView.model().get_layer_height("BM")
-        except ValueError as e:
-            QtWidgets.QMessageBox.warning(
-                self,
-                "Layer Warning",
-                "Computing the idealRPE requires a BM and"
-                " RPE annotation. \n\n{}".format(str(e)),
-            )
-            return None
-        ideal_rpe = ep.core.drusen.normal_rpe(rpe_height, bm_height, self.scene.shape)
-
-        linetype_model = LineTypeModel(self)
-        line_types = linetype_model.get_line_types()
-        try:
-            layer_type_dict = [l for l in line_types if l["name"] == "idealRPE"][0]
-        except IndexError:
-            layer_type_dict = linetype_model.create_type(
-                {
-                    "name": "idealRPE",
-                    "public": True,
-                    "default_color": "ff0000",
-                    "description": "The ideal RPE position",
-                }
-            )
-
-        layer_data = {
-            "annotationtype_id": layer_type_dict["id"],
-            "current_color": layer_type_dict["default_color"],
-            "image_id": self.scene.image_id,
-            "z_value": (
-                self.model.rowCount(QtCore.QModelIndex(self.model.area_index))
-                + self.model.rowCount(QtCore.QModelIndex(self.model.line_index))
-            ),
-            "line_data": json.dumps(
-                {
-                    "curves": [],
-                    "points": [(x, ideal_rpe[x]) for x in range(len(ideal_rpe))],
-                }
-            ),
-        }
-        self.add_line_annotation(layer_data)
+    def current_item(self):
+        model_index = self.imageTreeView.selectionModel().currentIndex()
+        tree_item = self.model.getItem(model_index)
+        if type(tree_item) == TreeItem:
+            item = self.model.annotation_items[id(tree_item.annotation)][
+                self.model.current_slice
+            ]
+            return item
 
 
 class EnfaceTab(ViewTab):
     def __init__(self, data: ep.EyeEnface, parent=None):
         super().__init__(data, parent)
-        self.model = EnfaceTreeItemModel(data=self.data, parent=self)
+        self.set_model(EnfaceTreeItemModel(data=data, parent=self))
 
         self.configure_imageTreeView()
+
+    @property
+    def current_item(self):
+        model_index = self.imageTreeView.selectionModel().currentIndex()
+        tree_item = self.model.getItem(model_index)
+        if type(tree_item) == TreeItem:
+            item = self.model.annotation_items[id(tree_item.annotation)]
+            return item

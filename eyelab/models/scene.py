@@ -4,8 +4,6 @@ from typing import Tuple, Dict
 from PySide6 import QtGui, QtCore, Qt, QtWidgets
 from PySide6.QtCore import QRectF
 
-from eyelab.tools import Inspection
-
 from eyelab.models.utils import array2qgraphicspixmapitem
 
 import eyepy as ep
@@ -19,13 +17,9 @@ Point = namedtuple("Point", ["x", "y"])
 
 
 class CustomGraphicsScene(QtWidgets.QGraphicsScene):
-    toolChanged = QtCore.Signal(object)
-
     def __init__(self, parent, data: ep.EyeBscan, *args, **kwargs):
         super().__init__(*args, **kwargs, parent=parent)
         self.data = data
-        self._current_tool = None
-        self.current_tool = Inspection()
 
         self._widthForHeightFactor = 1
 
@@ -42,15 +36,6 @@ class CustomGraphicsScene(QtWidgets.QGraphicsScene):
         self.setItemIndexMethod(QtWidgets.QGraphicsScene.NoIndex)
 
         logger.debug("CustomGraphicsScene: __init__ done")
-
-    @property
-    def current_tool(self):
-        return self._current_tool
-
-    @current_tool.setter
-    def current_tool(self, tool):
-        self.toolChanged.emit(tool)
-        self._current_tool = tool
 
     def drawBackground(self, painter: QtGui.QPainter, rect: QtCore.QRectF):
         if self.background_on:
@@ -101,3 +86,8 @@ class CustomGraphicsScene(QtWidgets.QGraphicsScene):
         super().mouseReleaseEvent(event)
         if not self.grabber_cache is None:
             self.grabber_cache.grabMouse()
+
+    def mouseDoubleClickEvent(self, event: QtGui.QMouseEvent) -> None:
+        view = self.views()[0]
+        view.tool.mouse_doubleclick_handler(view.view_tab.current_item, event)
+        event.accept()

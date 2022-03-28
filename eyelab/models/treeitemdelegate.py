@@ -2,12 +2,12 @@ from PySide6 import QtWidgets, QtGui, QtCore
 from PySide6.QtWidgets import QWidget
 
 from eyelab.models.layereditor import LayerEntry, LayerGroupEntry
+from typing import Union
 
 
 class TreeItemDelegate(QtWidgets.QStyledItemDelegate):
     def __init__(self, parent):
         super().__init__(parent)
-        self._visible = True
 
     def paint(
         self,
@@ -37,22 +37,21 @@ class TreeItemDelegate(QtWidgets.QStyledItemDelegate):
     def setEditorData(self, editor: QWidget, index: QtCore.QModelIndex) -> None:
         data = index.model().data(index, QtCore.Qt.EditRole)
         editor.label.setText(str(data["name"]))
-        if data["name"] == "RPE":
-            idealRPE_action = QtGui.QAction("idealRPE", editor)
-            scene_tab = editor.parent().parent().parent()
-            idealRPE_action.triggered.connect(scene_tab.compute_idealRPE)
-            editor.addAction(idealRPE_action)
         editor.set_visible(data["visible"])
         if type(editor) == LayerEntry:
             editor.set_color(data["current_color"].upper())
 
     def setModelData(
         self,
-        editor: QWidget,
+        editor: Union[LayerEntry, LayerGroupEntry],
         model: QtCore.QAbstractItemModel,
         index: QtCore.QModelIndex,
     ) -> None:
-        model.setData(index, editor, QtCore.Qt.EditRole)
+        data = {"visible": editor.visible, "name": editor.label.text()}
+        if type(editor) is LayerEntry:
+            data["current_color"] = editor.color
+
+        model.setData(index, data, QtCore.Qt.EditRole)
 
     def sizeHint(
         self, option: "QStyleOptionViewItem", index: QtCore.QModelIndex

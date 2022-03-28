@@ -36,12 +36,28 @@
      <addaction name="actionImportVol"/>
      <addaction name="actionImportHEXML"/>
      <addaction name="separator"/>
+     <addaction name="actionImportRETOUCH"/>
+     <addaction name="actionImportDuke"/>
+     <addaction name="separator"/>
      <addaction name="actionImportBSFolder"/>
     </widget>
+    <widget class="QMenu" name="menuAnnotations">
+     <property name="title">
+      <string>Annotations</string>
+     </property>
+     <addaction name="actionLoadAnnotations"/>
+     <addaction name="separator"/>
+     <addaction name="actionSaveAnnotations"/>
+     <addaction name="actionSaveAnnotationsAs"/>
+    </widget>
+    <addaction name="separator"/>
+    <addaction name="actionOpen"/>
+    <addaction name="actionSave"/>
+    <addaction name="actionSave_As"/>
     <addaction name="separator"/>
     <addaction name="menuUpload"/>
-    <addaction name="actionSave"/>
     <addaction name="separator"/>
+    <addaction name="menuAnnotations"/>
    </widget>
    <widget class="QMenu" name="menuEdit">
     <property name="enabled">
@@ -72,60 +88,6 @@
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <action name="actionSave_as">
-   <property name="text">
-    <string>Save as</string>
-   </property>
-  </action>
-  <action name="actionOpen_Project">
-   <property name="text">
-    <string>Open Project</string>
-   </property>
-  </action>
-  <action name="action_vol">
-   <property name="enabled">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>HE raw Export (.vol )</string>
-   </property>
-  </action>
-  <action name="actionToggle2D">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="checked">
-    <bool>true</bool>
-   </property>
-   <property name="enabled">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>2D Viewer</string>
-   </property>
-  </action>
-  <action name="actionToggle3D">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="checked">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>3D Viewer</string>
-   </property>
-  </action>
-  <action name="actionToogleToolbox">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="checked">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Toolbox</string>
-   </property>
-  </action>
   <action name="actionUndo">
    <property name="checkable">
     <bool>false</bool>
@@ -156,34 +118,14 @@
     <string>Ctrl+Y</string>
    </property>
   </action>
-  <action name="action_cfp">
-   <property name="text">
-    <string>CFP (.bmp/.tif/.jpg)</string>
-   </property>
-  </action>
-  <action name="actionExport">
-   <property name="text">
-    <string>Export</string>
-   </property>
-  </action>
   <action name="actionImportVol">
    <property name="text">
     <string>Heyex Raw (.vol)</string>
    </property>
   </action>
-  <action name="actionImportCfp">
-   <property name="text">
-    <string>CFP</string>
-   </property>
-  </action>
-  <action name="actionSave">
+  <action name="actionSaveAnnotations">
    <property name="text">
     <string>Save</string>
-   </property>
-  </action>
-  <action name="actionImportHEXML">
-   <property name="text">
-    <string>Heyex XML (.xml)</string>
    </property>
   </action>
   <action name="actionImportBSFolder">
@@ -211,14 +153,49 @@
     <string>Shortcut Sheet</string>
    </property>
   </action>
-  <action name="actionImportNir">
-   <property name="text">
-    <string>NIR</string>
-   </property>
-  </action>
   <action name="actionIntroduction">
    <property name="text">
     <string>Introduction</string>
+   </property>
+  </action>
+  <action name="actionImportRETOUCH">
+   <property name="text">
+    <string>RETOUCH</string>
+   </property>
+  </action>
+  <action name="actionImportDuke">
+   <property name="text">
+    <string>Duke (Farsiu 2014)</string>
+   </property>
+  </action>
+  <action name="actionImportHEXML">
+   <property name="text">
+    <string>Heyex XML (.xml)</string>
+   </property>
+  </action>
+  <action name="actionLoadAnnotations">
+   <property name="text">
+    <string>Load</string>
+   </property>
+  </action>
+  <action name="actionSaveAnnotationsAs">
+   <property name="text">
+    <string>Save As</string>
+   </property>
+  </action>
+  <action name="actionOpen">
+   <property name="text">
+    <string>Open</string>
+   </property>
+  </action>
+  <action name="actionSave">
+   <property name="text">
+    <string>Save</string>
+   </property>
+  </action>
+  <action name="actionSave_As">
+   <property name="text">
+    <string>Save As</string>
    </property>
   </action>
  </widget>

@@ -9,24 +9,21 @@ from eyelab.models.viewtab import EnfaceTab
 
 
 class EnfaceView(CustomGraphicsView):
-    cursorPosChanged = QtCore.Signal(QtCore.QPointF, CustomGraphicsView)
-
     def __init__(self, parent, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
         self.setTransformationAnchor(QtWidgets.QGraphicsView.AnchorUnderMouse)
 
     def set_data(self, data: EyeEnface, name: str):
         self.data = data
-        self.setScene(CustomGraphicsScene(parent=self, data=data))
-        self.scene().toolChanged.connect(self.update_tool)
-
         self.view_tab = EnfaceTab(self.data)
+        self.setScene(self.view_tab.model.scene)
         self.zoomToFit()
 
     def map_from_sender(self, pos, sender):
-        tform = self.get_tform(sender)
-        result = tform((pos.x(), pos.y()))[0]
-        return QPointF(*result)
+        pass
+        # tform = self.get_tform(sender)
+        # result = tform((pos.x(), pos.y()))[0]
+        # return QPointF(*result)
 
     def map_to_sender(self, pos, sender):
         tform = self.get_tform(sender)
@@ -52,13 +49,13 @@ class EnfaceView(CustomGraphicsView):
     def mouseMoveEvent(self, event):
         super().mouseMoveEvent(event)
         scene_pos = self.mapToScene(event.pos())
-        if self.tool.paint_preview.scene() == self.scene():
-            self.tool.paint_preview.setPos(scene_pos.toPoint())
         self.cursorPosChanged.emit(scene_pos, self)
 
     def get_tform(self, other_view):
         id_pair = (self.image_id, other_view.scene().image_id)
+        print("here")
         if not id_pair in self._tforms:
+            print("here_to")
             tmodel = "similarity"
             self._tforms[id_pair] = get_transformation(*id_pair, tmodel)
         return self._tforms[id_pair]

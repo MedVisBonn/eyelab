@@ -91,12 +91,12 @@ class Ui_SceneTab(object):
 
         self.verticalLayout.addLayout(self.opacityLayout)
 
-        self.ImageTreeView = QTreeView(SceneTab)
-        self.ImageTreeView.setObjectName(u"ImageTreeView")
-        self.ImageTreeView.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.ImageTreeView.setIndentation(5)
+        self.imageTreeView = QTreeView(SceneTab)
+        self.imageTreeView.setObjectName(u"imageTreeView")
+        self.imageTreeView.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.imageTreeView.setIndentation(5)
 
-        self.verticalLayout.addWidget(self.ImageTreeView)
+        self.verticalLayout.addWidget(self.imageTreeView)
 
         self.buttonsLayout = QHBoxLayout()
         self.buttonsLayout.setObjectName(u"buttonsLayout")
@@ -116,6 +116,7 @@ class Ui_SceneTab(object):
 
         self.upButton = QToolButton(SceneTab)
         self.upButton.setObjectName(u"upButton")
+        self.upButton.setEnabled(True)
         icon1 = QIcon()
         icon1.addFile(
             u":/icons/icons/baseline-arrow_upward-24px.svg",

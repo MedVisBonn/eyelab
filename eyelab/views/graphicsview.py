@@ -8,6 +8,7 @@ logger = logging.getLogger(__name__)
 
 
 class CustomGraphicsView(QGraphicsView):
+    cursorPosChanged = QtCore.Signal(QtCore.QPointF, QGraphicsView)
 
     viewChanged = QtCore.Signal(QGraphicsView)
 
@@ -38,7 +39,7 @@ class CustomGraphicsView(QGraphicsView):
 
     @property
     def tool(self):
-        return self.scene().current_tool
+        return self.view_tab.current_tool
 
     def setEnabled(self, a0: bool) -> None:
         if a0:
@@ -50,22 +51,29 @@ class CustomGraphicsView(QGraphicsView):
 
     def enterEvent(self, event):
         self.setEnabled(True)
-        # self.grabKeyboard()
+        self.update_tool()
 
         if self.linked_navigation:
-            tab_widget = self.scene().scene_tab.parent().parent()
-            index = tab_widget.indexOf(self.scene().scene_tab)
+            tab_widget = self.view_tab.parent().parent()
+            index = tab_widget.indexOf(self.view_tab)
             tab_widget.setCurrentIndex(index)
 
-        self.tool.paint_preview.setParentItem(self.scene().activePanel())
+        self.scene().addItem(self.tool.paint_preview)
+
         super().enterEvent(event)
 
     def leaveEvent(self, event):
         self.setEnabled(False)
-        self.releaseKeyboard()
         if self.tool.paint_preview.scene() == self.scene():
             self.scene().removeItem(self.tool.paint_preview)
         super().leaveEvent(event)
+
+    def mouseMoveEvent(self, event):
+        super().mouseMoveEvent(event)
+        scene_pos = self.mapToScene(event.pos())
+        if self.tool.paint_preview.scene() == self.scene():
+            self.tool.paint_preview.setPos(scene_pos.toPoint())
+        self.cursorPosChanged.emit(scene_pos, self)
 
     def hasWidthForHeight(self):
         return True
@@ -127,11 +135,9 @@ class CustomGraphicsView(QGraphicsView):
 
     def setScene(self, scene) -> None:
         super().setScene(scene)
-        # self.update_tool()
 
-    def update_tool(self, tool=None):
-        if tool is None:
-            tool = self.scene().current_tool
+    def update_tool(self):
+        tool = self.view_tab.current_tool
         if tool.name == "inspection":
             self.setDragMode(QtWidgets.QGraphicsView.ScrollHandDrag)
         else:

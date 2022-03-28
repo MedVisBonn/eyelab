@@ -1,3 +1,4 @@
+import eyepy
 from PySide6 import QtGui, QtWidgets, QtCore, Qt
 from eyelab.views.ui.ui_spline_options import Ui_splineOptions
 
@@ -12,14 +13,33 @@ class SplineWidget(QtWidgets.QWidget, Ui_splineOptions):
         # self.showCheckBox.setChecked()
         self.showCheckBox.stateChanged.connect(self.change_controlpoints)
 
+        # Todo: fix bugs to enable features
+        self.label.hide()
+        self.slopeCheckBox.hide()
+        self.strengthCheckBox.hide()
+        self.neighbourCheckBox.hide()
+        self.showCheckBox.hide()
+
     def change_controlpoints(self):
         scenetab = self.parentWidget().parentWidget()
-        model_index = scenetab.ImageTreeView.selectionModel().currentIndex()
+        model_index = scenetab.imageTreeView.selectionModel().currentIndex()
         item = scenetab.model.getItem(model_index)
         if self.showCheckBox.isChecked():
             item.show_control_points()
         else:
             item.hide_control_points()
+
+    def set_data(self, data: dict):
+        checkbox_options = [
+            (self.slopeCheckBox, "spline:slope"),
+            (self.strengthCheckBox, "spline:strength"),
+            (self.neighbourCheckBox, "spline:neighbour"),
+        ]
+        for cb, option in checkbox_options:
+            if not option in data:
+                data[option] = True
+            cb.setChecked(data[option])
+            cb.stateChanged.connect(lambda state: data.update({option: bool(state)}))
 
 
 class PaintPreview(QtWidgets.QGraphicsItem):
@@ -87,7 +107,7 @@ class Spline(object):
         pass
 
     def mouse_doubleclick_handler(self, gitem, event):
-        pos = gitem.mapToScene(event.pos())
+        pos = event.scenePos()
         gitem.add_knot(pos)
 
     def mouse_release_handler(self, gitem, event):

@@ -101,7 +101,7 @@ class Pen(object):
 
     def get_painter(self, gitem):
         painter = QtGui.QPainter(gitem.qimage)
-        color = QtGui.QColor(f"#{gitem.current_color}")
+        color = QtGui.QColor(f"#{gitem.annotation_data.meta['current_color']}")
         brush = QtGui.QBrush()
         brush.setStyle(QtCore.Qt.SolidPattern)
         brush.setColor(color)
@@ -132,7 +132,8 @@ class Pen(object):
         gitem.changed = True
 
     def mouse_move_handler(self, gitem: "TreeAreaItemDB", event):
-        pos = gitem.mapToScene(event.pos()).toPoint()
+        # pos = gitem.mapToScene(event.pos()).toPoint()
+        pos = event.scenePos().toPoint()
         if event.buttons() & QtCore.Qt.LeftButton:
             self.draw(gitem, pos)
         elif event.buttons() & QtCore.Qt.RightButton:
