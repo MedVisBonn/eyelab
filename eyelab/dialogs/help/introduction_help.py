@@ -1,36 +1,35 @@
-from oat.modules.dialogs.help.help_dialog import HelpWindow
+from eyelab.dialogs.help.help_dialog import HelpWindow
 
 help_text = """
 # Introduction
 
-OAT is a multimodal annotation tool for ophthalmological imaging data. All the date is
-stored on a server independent from your workstation. From your workstation you
-connect to the server to make annotations.
+EyeLab is a multimodal annotation tool for ophthalmological imaging data.
 
-When you add a subjects data to the annotation tool you add it to one of the
-subjects collections. By default every subject has an OS, OD and an NA collection,
-but you can add custom collections. Data in a collection can be viewed and annotated
-together. So for example if you have a dataset with multiple modalities you could
-add a collection to every subject which only holds the subjects CFP. This could be used
-for blinded grading and annotation.
+Get started by importing data in one of the supported file formats
 
-Collections can be organised into datasets.
+## Currently supported file formats
 
-## Data Upload
++ Data exported from HEXEX in the .xml or .vol format
++ Data from the RETOUCH challenge
++ AMD and Control Dataset from  (Farsiu 2014)
++ Import B-scans from folder (sorting the file names is expected to result in the correct B-scan order
++ Saving and opening of .eye files, EyeLabs file format.
 
-For adding data to the system you can click in the top left corner on File -> Import.
-Here you have different options. Currently we support adding VOL and XML exports
-from HEYEX as well as folders conaining B-Scans and individual images holding an
-enface image. When uploading the data you can select the subject and collection you want
-to add the data to. Datasets are not supported in the GUI yet.
-After you added a new collection you can see it in the table and after selection
-you can click on `Register` if your collections contains two enface images or on
-`Annotate` for any number of enface images and OCT volumes.
+## The Workspace:
 
-# How to continue
+Your workspace consists of a combined Enface and Volume view. On the right you have an overview
+where annotations are managed for the OCT volume as well as for the Enface image.
+
+## Navigation
+
+You can zoom in and out using the mouse wheel. With the standard **Inspection** tool you can
+move the image around if you want to see another part. If you press CTRL while using the mouse
+wheel on the Volume view, you scroll through adjacent B-scans. Use CRTL + x to toggle a
+linked navigation where B-scans change based on your mouse position in the enface.
+
+## How to continue
 From here you can continue with one of the following guides depending on your
 needs.
-+ Registration Guide
 + Layer Annotation Guide
 + Area Annotation Guide
 """

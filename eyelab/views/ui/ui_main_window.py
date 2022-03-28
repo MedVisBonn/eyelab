@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'ui_main_window.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.2.3
+## Created by: Qt User Interface Compiler version 6.2.4
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -87,6 +87,7 @@ class Ui_MainWindow(object):
         self.actionAreaAnnotationGuide.setObjectName(u"actionAreaAnnotationGuide")
         self.actionRegistrationGuide = QAction(MainWindow)
         self.actionRegistrationGuide.setObjectName(u"actionRegistrationGuide")
+        self.actionRegistrationGuide.setVisible(False)
         self.actionShortcutSheet = QAction(MainWindow)
         self.actionShortcutSheet.setObjectName(u"actionShortcutSheet")
         self.actionIntroduction = QAction(MainWindow)
@@ -99,6 +100,7 @@ class Ui_MainWindow(object):
         self.actionImportHEXML.setObjectName(u"actionImportHEXML")
         self.actionLoadAnnotations = QAction(MainWindow)
         self.actionLoadAnnotations.setObjectName(u"actionLoadAnnotations")
+        self.actionLoadAnnotations.setVisible(False)
         self.actionSaveAnnotationsAs = QAction(MainWindow)
         self.actionSaveAnnotationsAs.setObjectName(u"actionSaveAnnotationsAs")
         self.actionOpen = QAction(MainWindow)
@@ -121,6 +123,7 @@ class Ui_MainWindow(object):
         self.menuUpload.setObjectName(u"menuUpload")
         self.menuAnnotations = QMenu(self.menuFile)
         self.menuAnnotations.setObjectName(u"menuAnnotations")
+        self.menuAnnotations.setEnabled(True)
         self.menuEdit = QMenu(self.menubar)
         self.menuEdit.setObjectName(u"menuEdit")
         self.menuEdit.setEnabled(False)

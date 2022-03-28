@@ -2,6 +2,8 @@ import logging
 import sys
 import os
 from functools import partial
+from pathlib import Path
+
 from PySide6 import QtWidgets, QtGui
 from PySide6.QtWidgets import QFileDialog
 
@@ -11,6 +13,13 @@ from eyelab.config import EYELAB_FOLDER
 from eyelab.views.ui.ui_main_window import Ui_MainWindow
 from eyelab.views.workspace import Workspace
 from eyelab.dialogs import ProceedDialog, NotificationDialog
+
+from eyelab.dialogs.help import (
+    IntroductionHelp,
+    LayerAnnotationHelp,
+    AreaAnnotationHelp,
+    ShortcutHelp,
+)
 
 
 class eyelab(QtWidgets.QMainWindow, Ui_MainWindow):
@@ -74,6 +83,13 @@ class eyelab(QtWidgets.QMainWindow, Ui_MainWindow):
 
         # self.statusBar().showMessage("")
 
+    @property
+    def start_dir(self):
+        if self.save_path:
+            return str(Path(self.save_path).parent)
+        else:
+            return str(Path.home())
+
     def import_data(self, method, format):
         if not self.workspace.data is None:
             message = "The import repaces all data you have in your workspace. Do you want to proceed?"
@@ -82,9 +98,9 @@ class eyelab(QtWidgets.QMainWindow, Ui_MainWindow):
                 return
 
         if format == "file":
-            path = QFileDialog.getOpenFileName()[0]
+            path = QFileDialog.getOpenFileName(dir=self.start_dir)[0]
         elif format == "folder":
-            path = QFileDialog.getExistingDirectory()
+            path = QFileDialog.getExistingDirectory(dir=self.start_dir)
 
         self.workspace.set_data(method(path))
 
@@ -135,10 +151,13 @@ class eyelab(QtWidgets.QMainWindow, Ui_MainWindow):
         path = QFileDialog.getOpenFileName(
             parent=self,
             caption="Load",
+            dir=self.start_dir,
             filter="Eye files (*.eye)",
         )[0]
         if path == "":
             return
+        if not path.startswith("/run/user"):
+            self.save_path = path
         ev = ep.EyeVolume.load(path)
         self.workspace.set_data(ev)
 

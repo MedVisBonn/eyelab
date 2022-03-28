@@ -542,11 +542,11 @@ class PolygonPath(QtWidgets.QGraphicsPathItem):
         self.polygon = QtGui.QPolygonF().fromList(self.points)
 
         self._start = start
-        if start is None:
+        if start is None and self.points != []:
             self._start = self.points[0]
 
         self._end = end
-        if end is None:
+        if end is None and self.points != []:
             self._end = self.points[-1]
 
         self._update_polygon()
@@ -564,9 +564,13 @@ class PolygonPath(QtWidgets.QGraphicsPathItem):
 
     def _update_polygon(self):
         self.points = self._points_from_heights(self.heights)
+        if self.points == []:
+            self.setPath(QtGui.QPainterPath())
+            self.update()
+            return
         points = (
             [self._start]
-            + [p for p in self.points if self._start.x() < p.x() < self._end.x()]
+            + [p for p in self.points if self._start.x() <= p.x() <= self._end.x()]
             + [self._end]
         )
 
@@ -643,12 +647,26 @@ class LayerItem(QtWidgets.QGraphicsPathItem):
         return heights
 
     def update_line(self):
-        if len(self.cubic_spline.knots) != 0:
-            self.start_polygon.set_end(self.cubic_spline.knots[0].center)
-            self.end_polygon.set_start(self.cubic_spline.knots[-1].center)
+        # hasattr check for loading of new data. When old data is removed knots might fire an update althoug the cubic_spline is already removed.
+        if hasattr(self, "cubic_spline") and len(self.cubic_spline.knots) != 0:
+            if (
+                self.start_polygon._start is None
+                or self.cubic_spline.knots[0].center.x() < self.start_polygon._start.x()
+            ):
+                self.start_polygon._start = self.cubic_spline.knots[0].center
+            if (
+                self.end_polygon._end is None
+                or self.cubic_spline.knots[-1].center.x() > self.end_polygon._end.x()
+            ):
+                self.end_polygon._end = self.cubic_spline.knots[-1].center
+
             self.cubic_spline.update_spline()
             x, y = self.cubic_spline.indices
             self.annotation_data.data[-(self.index + 1), x] = y
+
+            self.start_polygon.set_end(self.cubic_spline.knots[0].center)
+            self.end_polygon.set_start(self.cubic_spline.knots[-1].center)
+
         self.update()
 
     def view(self):

@@ -42,6 +42,9 @@
      <addaction name="actionImportBSFolder"/>
     </widget>
     <widget class="QMenu" name="menuAnnotations">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
      <property name="title">
       <string>Annotations</string>
      </property>
@@ -147,6 +150,9 @@
    <property name="text">
     <string>Registration Guide</string>
    </property>
+   <property name="visible">
+    <bool>false</bool>
+   </property>
   </action>
   <action name="actionShortcutSheet">
    <property name="text">
@@ -176,6 +182,9 @@
   <action name="actionLoadAnnotations">
    <property name="text">
     <string>Load</string>
+   </property>
+   <property name="visible">
+    <bool>false</bool>
    </property>
   </action>
   <action name="actionSaveAnnotationsAs">

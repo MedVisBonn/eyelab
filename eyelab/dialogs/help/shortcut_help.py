@@ -1,4 +1,4 @@
-from oat.modules.dialogs.help.help_dialog import HelpWindow
+from eyelab.dialogs.help.help_dialog import HelpWindow
 
 help_text = """
 # Shortcut Sheet
@@ -6,17 +6,6 @@ help_text = """
 ## Annotation
 
 + Ctrl + X: toggle linked navigation
-+ Ctrl + A: toggle all annotations
-+ Ctrl + 1: switch to tool 1 (always inspection)
-+ Ctrl + 2: switch to tool 2 (depends on current annotation type)
-
-## Registration
-
-### Feature table navigation
-+ W: Last feature pair (one row up)
-+ S: Next feature pair (one row down)
-+ A: Last feature (previous column)
-+ D: Next feature (next column)
 """
 
 
