@@ -1,12 +1,10 @@
 import logging
-from typing import List
 
 from PySide6 import QtGui, QtCore, QtWidgets
 from PySide6.QtWidgets import QWidget
 
 from eyelab.views.ui.ui_workspace_view import Ui_WorkspaceView
 from eyelab.views.data_view import DataView
-from eyelab.models.viewtab import ViewTab
 
 import eyepy as ep
 

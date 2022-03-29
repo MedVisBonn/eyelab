@@ -77,11 +77,11 @@ class eyelab(QtWidgets.QMainWindow, Ui_MainWindow):
 
         # ev = load("drusen_patient")
         # ev.add_voxel_annotation(
-        #    ep.drusen(ev.layers["RPE"], ev.layers["BM"], ev.shape), name="Drusen"
+        #   ep.drusen(ev.layers["RPE"], ev.layers["BM"], ev.shape), name="Drusen"
         # )
         # self.workspace.set_data(ev)
 
-        # self.statusBar().showMessage("")
+        # self.statusBar().showMessage("Ready")
 
     @property
     def start_dir(self):
@@ -113,8 +113,8 @@ class eyelab(QtWidgets.QMainWindow, Ui_MainWindow):
             dialog = AreaAnnotationHelp(self)
         elif topic == "layer_annotation":
             dialog = LayerAnnotationHelp(self)
-        elif topic == "registration":
-            dialog = RegistrationHelp(self)
+        # elif topic == "registration":
+        #    dialog = RegistrationHelp(self)
         else:
             raise ValueError("topic not available")
 
