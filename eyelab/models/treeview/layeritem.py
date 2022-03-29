@@ -79,6 +79,7 @@ class KnotGraphicsItem(QtWidgets.QGraphicsEllipseItem):
         self.setFlag(QtWidgets.QGraphicsItem.ItemIgnoresTransformations, True)
         self.setFlag(QtWidgets.QGraphicsItem.ItemIsMovable, True)
         self.setFlag(QtWidgets.QGraphicsItem.ItemSendsGeometryChanges, True)
+        self.setFlag(QtWidgets.QGraphicsItem.ItemSendsScenePositionChanges, True)
         self.setFlag(QtWidgets.QGraphicsItem.ItemIsFocusable, True)
 
         self.setRect(QtCore.QRectF(QtCore.QPoint(-5, -5), QtCore.QPoint(5, 5)))
@@ -91,6 +92,8 @@ class KnotGraphicsItem(QtWidgets.QGraphicsEllipseItem):
     def itemChange(
         self, change: QtWidgets.QGraphicsItem.GraphicsItemChange, value: Any
     ) -> Any:
+        if change == QtWidgets.QGraphicsItem.ItemScenePositionHasChanged:
+            self.stay_in_scene()
         if change == QtWidgets.QGraphicsItem.ItemPositionHasChanged:
             self.parentItem().parentItem().parentItem().update_line()
             self.parentItem().sync()
@@ -142,7 +145,7 @@ class KnotGraphicsItem(QtWidgets.QGraphicsEllipseItem):
             pos.setY(0)
         if pos.y() > self.scene().shape[0]:
             pos.setY(self.scene().shape[0])
-        self.setPos(self.mapFromScene(pos))
+        self.setPos(self.mapToParent(self.mapFromScene(pos)))
 
     def mouseMoveEvent(self, event: "QGraphicsSceneMouseEvent") -> None:
         self.parentItem().mouseMoveEvent(event)
