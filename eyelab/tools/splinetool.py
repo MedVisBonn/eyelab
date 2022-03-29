@@ -1,8 +1,5 @@
-import eyepy
-from PySide6 import QtGui, QtWidgets, QtCore, Qt
+from PySide6 import QtGui, QtWidgets, QtCore
 from eyelab.views.ui.ui_spline_options import Ui_splineOptions
-
-# from oat.modules.annotation.models.treeview.lineitem import TreeLineItemBase
 
 
 class SplineWidget(QtWidgets.QWidget, Ui_splineOptions):

@@ -1,5 +1,4 @@
-from PySide6 import QtGui, QtWidgets, QtCore, Qt
-from oat.views.ui.ui_pen_options import Ui_penOptions
+from PySide6 import QtGui, QtWidgets, QtCore
 
 
 class FillSameWidget(QtWidgets.QWidget, Ui_fillSameOptions):

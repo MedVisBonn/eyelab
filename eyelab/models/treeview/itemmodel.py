@@ -1,6 +1,6 @@
 import collections
 
-from PySide6 import Qt, QtCore, QtWidgets
+from PySide6 import QtCore, QtWidgets
 from PySide6.QtCore import QAbstractItemModel
 from eyepy.core.utils import DynamicDefaultDict
 

@@ -1,4 +1,4 @@
-from PySide6 import QtGui, QtWidgets, QtCore, Qt
+from PySide6 import QtGui, QtWidgets, QtCore
 from eyelab.views.ui.ui_pen_options import Ui_penOptions
 
 

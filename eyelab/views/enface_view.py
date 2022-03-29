@@ -1,10 +1,9 @@
-from PySide6 import QtWidgets, QtCore
+from PySide6 import QtWidgets
 from PySide6.QtCore import Qt, QPointF
 
 from eyepy import EyeEnface
 
 from eyelab.views.graphicsview import CustomGraphicsView
-from eyelab.models.scene import CustomGraphicsScene
 from eyelab.models.viewtab import EnfaceTab
 
 

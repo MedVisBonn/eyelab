@@ -1,4 +1,4 @@
-from PySide6 import QtGui, QtWidgets, QtCore, Qt
+from PySide6 import QtGui, QtWidgets, QtCore
 
 
 class PaintPreview(QtWidgets.QGraphicsItem):

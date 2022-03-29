@@ -1,7 +1,6 @@
 from collections import namedtuple
-from typing import Tuple, Dict
 
-from PySide6 import QtGui, QtCore, Qt, QtWidgets
+from PySide6 import QtGui, QtCore, QtWidgets
 from PySide6.QtCore import QRectF
 
 from eyelab.models.utils import array2qgraphicspixmapitem

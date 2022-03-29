@@ -2,7 +2,6 @@ from typing import List, Dict, Optional, Any
 
 import numpy as np
 from PySide6 import QtCore, QtWidgets, QtGui
-import qimage2ndarray
 import eyepy as ep
 
 import logging

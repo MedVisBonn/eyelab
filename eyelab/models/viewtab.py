@@ -1,5 +1,3 @@
-import collections
-
 from PySide6 import QtWidgets, QtCore
 from PySide6.QtWidgets import QWidget
 
@@ -14,8 +12,6 @@ from eyelab.models.treeview.itemmodel import (
     TreeItem,
 )
 from eyelab.tools import line_tools, area_tools, basic_tools
-
-import json
 import eyepy as ep
 
 import logging
