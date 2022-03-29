@@ -5,7 +5,7 @@ EyeLab is a multimodal annotation tool for ophthalmological imaging data.
 ![EyeLab](docs/EyeLab.png)
 
 ## Getting Started
-If you are on Windows, download the latest executable [here](https://github.com/MedVisBonn/eyelab/releases/latest/download/EyeLab-0.1.0.exe) and double click it to start EyeLab.
+If you are on Windows, download the latest executable [here](https://uni-bonn.sciebo.de/s/SmAFFO72kLiRmK3) and double click it to start EyeLab.
 
 For Linux there is no package, but you might want to have a look at the Developers section for how to set up EyeLab.
 
@@ -124,5 +124,5 @@ To run EyeLab run `poetry run eyelab/main.py`
 ## Building the Windows executable
 
 ```shell
-poetry run pyinstaller eyelab/main.py --name EyeLab --onefile --windowed -i icon.ico
+poetry run pyinstaller eyelab/main.py --name EyeLab -i icon.ico --hiddenimport imagecodecs --collect-all imagecodecs --onefile
 ```
