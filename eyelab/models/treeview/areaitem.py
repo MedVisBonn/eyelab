@@ -31,10 +31,7 @@ class AreaItem(QtWidgets.QGraphicsPixmapItem):
         self.setPixmap(QtGui.QPixmap())
         self.set_data()
 
-        self.changed = False
-
         self.setFlag(QtWidgets.QGraphicsItem.ItemIsPanel)
-        self.interaction_ongoing = False
 
     def sync_with_volume(self):
         self.setVisible(self.annotation_data.meta["visible"])
@@ -56,6 +53,7 @@ class AreaItem(QtWidgets.QGraphicsPixmapItem):
         pixmap = self.pixmap()
         pixmap.convertFromImage(self.qimage)
         self.setPixmap(pixmap)
+        self.slice[...] = self.alpha_array
 
     def set_data(self):
         self.alpha_array[...] = 0.0
@@ -66,12 +64,10 @@ class AreaItem(QtWidgets.QGraphicsPixmapItem):
         return self.scene().views()[0]
 
     def mousePressEvent(self, event):
-        self.interaction_ongoing = True
         self.view().tool.mouse_press_handler(self, event)
         event.accept()
 
     def mouseReleaseEvent(self, event):
-        self.interaction_ongoing = False
         self.view().tool.mouse_release_handler(self, event)
         event.accept()
 
@@ -98,7 +94,6 @@ class AreaItem(QtWidgets.QGraphicsPixmapItem):
                 self.slice[int(offset_y + iy), int(offset_x + ix)] = True
 
         self.update_pixmap()
-        self.changed = True
 
     def remove_pixels(self, pos, mask):
         size_x, size_y = mask.shape
@@ -110,4 +105,3 @@ class AreaItem(QtWidgets.QGraphicsPixmapItem):
                 self.slice[int(offset_y + iy), int(offset_x + ix)] = False
 
         self.update_pixmap()
-        self.changed = True

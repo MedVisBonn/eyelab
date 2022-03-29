@@ -118,7 +118,6 @@ class Pen(object):
         painter.end()
 
         gitem.update_pixmap()
-        gitem.changed = True
 
     def erase(self, gitem, pos):
         radius = self.options_widget.sizeSlider.value() / 2
@@ -129,7 +128,6 @@ class Pen(object):
         painter.end()
 
         gitem.update_pixmap()
-        gitem.changed = True
 
     def mouse_move_handler(self, gitem: "TreeAreaItemDB", event):
         # pos = gitem.mapToScene(event.pos()).toPoint()
