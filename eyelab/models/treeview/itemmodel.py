@@ -383,7 +383,7 @@ class VolumeTreeItemModel(TreeItemModel):
 
     def add_voxel_annotation(self, name, color="FF0000"):
         # Add to EyeVolume
-        voxel_map = self._data.add_voxel_annotation(name)
+        voxel_map = self._data.add_voxel_annotation(name=name)
         voxel_map.meta = {
             **{"visible": True, "z_value": 0, "current_color": color},
             **voxel_map.meta,
