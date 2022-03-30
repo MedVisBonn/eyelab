@@ -436,9 +436,9 @@ class EnfaceTreeItemModel(TreeItemModel):
                 "name": "Areas",
             }
 
+        self.annotation_items = {}
         self._init_model()
         self.annotations = self._get_annotations()
-        self.annotation_items = {}
 
         self.dataChanged.connect(self.sync_annotations_to_tab)
 

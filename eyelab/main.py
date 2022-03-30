@@ -102,6 +102,7 @@ class eyelab(QtWidgets.QMainWindow, Ui_MainWindow):
         elif format == "folder":
             path = QFileDialog.getExistingDirectory(dir=self.start_dir)
 
+        self.save_path = None
         self.workspace.set_data(method(path))
 
     def open_help(self, topic):
@@ -158,6 +159,8 @@ class eyelab(QtWidgets.QMainWindow, Ui_MainWindow):
             return
         if not path.startswith("/run/user"):
             self.save_path = path
+        else:
+            self.save_path = None
         ev = ep.EyeVolume.load(path)
         self.workspace.set_data(ev)
 

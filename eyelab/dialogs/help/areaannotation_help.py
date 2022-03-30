@@ -6,7 +6,7 @@ help_text = """
 An area annotation in Eyelab is a pixel_map on top of the underlying image. Its color can
 be changed, as well as its visibility.
 
-## Adding a new Layer
+## Adding a new Area Annotation
 
 Create a new area using the (+) symbol in the overview on the right. Specify a name
 and select Areas from the Type dropdown.
