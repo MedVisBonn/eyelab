@@ -126,7 +126,7 @@ class eyelab(QtWidgets.QMainWindow, Ui_MainWindow):
         if "PYCHARM_HOSTED" in os.environ:
             options = QFileDialog.DontUseNativeDialog
         else:
-            options = None
+            options = QFileDialog.Options()
         self.save_path, filter = QFileDialog.getSaveFileName(
             parent=self, caption="Save", filter="Eye files (*.eye)", options=options
         )
