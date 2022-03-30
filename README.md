@@ -115,3 +115,14 @@ Since Eyelab builds on the eyepy Python package, annotations stored by Eyelab in
 import eyepy as ep
 ev = ep.EyeVolume.load("path/to/file.eye")
 ```
+
+# Development
+
+Clone the repository, install python poetry and run `poetry install` after navigating into the project folder.
+
+To run EyeLab run `poetry run eyelab/main.py`
+## Building the Windows executable
+
+```shell
+poetry run pyinstaller eyelab/main.py --name EyeLab --onefile --windowed -i icon.ico
+```
