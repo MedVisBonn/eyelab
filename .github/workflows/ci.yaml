@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -12,10 +12,10 @@ concurrency:
 
 jobs:
   Quality:
-    uses: MedVisBonn/eyelab/.github/workflows/_quality.yaml@master
+    uses: MedVisBonn/eyelab/.github/workflows/_quality.yaml@main
 
   Release:
     needs: Quality
-    uses: MedVisBonn/eyelab/.github/workflows/_release.yaml@master
+    uses: MedVisBonn/eyelab/.github/workflows/_release.yaml@main
     secrets:
       PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}

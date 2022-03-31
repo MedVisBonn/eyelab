@@ -36,8 +36,6 @@ class VolumeView(CustomGraphicsView):
         logger.debug("VolumeView: data is set")
 
     def map_to_localizer(self, pos):
-        # x = StartX + xpos
-        # y = StartY + StartY-EndY/lenx * xpos
         slice_n = pos.toPoint().y()
         lclzr_scale_x = self.data.localizer.scale_x
         lclzr_scale_y = self.data.localizer.scale_y
