@@ -15,13 +15,9 @@ eyepie = "0.6.3"
 [tool.poetry.dev-dependencies]
 pyinstaller = "^4.8"
 pytest = "^6.2.5"
+pytest-cov = "^3.0.0"
 pre-commit = "^2.17.0"
 commitizen = "^2.20.4"
-
-[tool.commitizen]
-name = "cz_conventional_commits"
-version = "0.1.0"
-tag_format = "$version"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -35,3 +31,4 @@ version_pattern = ["CITATION.cff:v(\\d+\\.\\d+\\.\\d+)", "README.md:v(\\d+\\.\\d
 upload_to_pypi = true
 upload_to_release = true
 build_command = "pip install poetry && poetry build"
+branch = "main"

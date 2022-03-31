@@ -11,11 +11,11 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  Quality:
-    uses: MedVisBonn/eyelab/.github/workflows/_quality.yaml@main
+  #Quality:
+  #  uses: MedVisBonn/eyelab/.github/workflows/_quality.yaml@main
 
   Release:
-    needs: Quality
+    #needs: Quality
     uses: MedVisBonn/eyelab/.github/workflows/_release.yaml@main
     secrets:
       PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
