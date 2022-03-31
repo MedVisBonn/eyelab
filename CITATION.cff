@@ -1,0 +1,47 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: EyeLab
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Olivier
+    family-names: Morelle
+    email: oli4morelle@gmail.com
+    orcid: 'https://orcid.org/0000-0001-6404-2726'
+    affiliation: >-
+      University of Bonn - Bonn-Aachen International
+      Center for Information Technology (b-it) /
+      University Hospital Bonn - Department of
+      Ophthalmology
+identifiers:
+  - type: url
+    value: 'https://github.com/MedVisBonn/eyelab/tree/v0.1.0'
+repository-code: 'https://github.com/MedVisBonn/eyelab/tree/v0.1.0'
+abstract: >-
+  Annotation of eye imaging data such as OCT or
+  fundus images is a common task when building a
+  dataset for model training or evaluating clinical
+  studies. While annotation tools for individual
+  modalities exist, the integrated study of multiple
+  modalities is often hindered by the tedious process
+  of acquiring multi-modal annotations.
+
+  EyeLab is a multi-modal annotation tool designed to
+  ease the annotation process for eye imaging data,
+  and thereby accelerate advancements in ophthalmological
+  research.
+keywords:
+  - OCT
+  - Fundus
+  - Annotation
+  - Drusen
+  - Layers
+  - Areas
+  - HEYEX
+license: MIT
+version: v0.1.0
+date-released: '2022-03-31'

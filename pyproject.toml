@@ -26,3 +26,12 @@ tag_format = "$version"
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.semantic_release]
+major_on_zero = false
+version_variable = ['eyelab/__init__.py:__version__']
+version_toml = "pyproject.toml:tool.poetry.version"
+version_pattern = ["CITATION.cff:v(\\d+\\.\\d+\\.\\d+)", "README.md:v(\\d+\\.\\d+\\.\\d+)"]
+upload_to_pypi = true
+upload_to_release = true
+build_command = "pip install poetry && poetry build"
