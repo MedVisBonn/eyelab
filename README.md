@@ -1,5 +1,8 @@
 # EyeLab
 
+[![PyPI version](https://badge.fury.io/py/eyelab.svg)](https://badge.fury.io/py/eyelab)
+[![DOI](https://zenodo.org/badge/474946562.svg)](https://zenodo.org/badge/latestdoi/474946562)
+
 EyeLab is a multimodal annotation tool for ophthalmological imaging data.
 
 ![EyeLab](docs/EyeLab.png)
