@@ -140,6 +140,12 @@ class eyelab(QtWidgets.QMainWindow, Ui_MainWindow):
             if path == "":
                 return
 
+        if self.workspace.data is None:
+            message = "No data available for saving"
+            dialog = NotificationDialog(message=message, parent=self)
+            dialog.exec()
+            return
+
         self.workspace.data.save(self.save_path)
 
     def load(self):

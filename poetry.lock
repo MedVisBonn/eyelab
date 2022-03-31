@@ -104,11 +104,11 @@ python-versions = "*"
 
 [[package]]
 name = "eyepie"
-version = "0.6.1"
+version = "0.6.2"
 description = "The Python package for working with ophthalmological data."
 category = "main"
 optional = false
-python-versions = ">=3.5"
+python-versions = ">=3.7,<3.11"
 
 [package.dependencies]
 imagecodecs = ">=2021.11.20,<2022.0.0"
@@ -806,7 +806,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.7,<3.11"
-content-hash = "9e80ded9cbdae4efd0d5460900c91b92d56288c06535f368d17cfbdd49e54d6e"
+content-hash = "1a5d5ea78a3d56c65639656658873c9b1e4034bf266504745323964274dc6265"
 
 [metadata.files]
 altgraph = [
@@ -850,8 +850,8 @@ distlib = [
     {file = "distlib-0.3.4.zip", hash = "sha256:e4b58818180336dc9c529bfb9a0b58728ffc09ad92027a3f30b7cd91e3458579"},
 ]
 eyepie = [
-    {file = "eyepie-0.6.1-py3-none-any.whl", hash = "sha256:4b87aca3a40f791430f9159dc43db7641074fdb464473b1283f020200a541544"},
-    {file = "eyepie-0.6.1.tar.gz", hash = "sha256:927a987afd71fde5971a32d39ed9296c9d8e55ee6b25612d04d56fbfe01dc380"},
+    {file = "eyepie-0.6.2-py3-none-any.whl", hash = "sha256:3c52a7a7ad5ac4797fe9fa1a182a9e044883151abf934f5879539a9c4c9d04f8"},
+    {file = "eyepie-0.6.2.tar.gz", hash = "sha256:37d75ef750049a52cf8689fdbfb1a131a47f1100a2c91977bdd4086a6a5a3702"},
 ]
 filelock = [
     {file = "filelock-3.6.0-py3-none-any.whl", hash = "sha256:f8314284bfffbdcfa0ff3d7992b023d4c628ced6feb957351d4c48d059f56bc0"},
