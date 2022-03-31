@@ -1,20 +1,18 @@
-from PySide6 import QtWidgets, QtCore
+import logging
+
+import eyepy as ep
+from PySide6 import QtCore, QtWidgets
 from PySide6.QtWidgets import QWidget
 
 from eyelab.models.treeitemdelegate import TreeItemDelegate
-
-
-from eyelab.views.ui.ui_scene_tab import Ui_SceneTab
 from eyelab.models.treeview.itemmodel import (
-    VolumeTreeItemModel,
     EnfaceTreeItemModel,
-    TreeItemModel,
     TreeItem,
+    TreeItemModel,
+    VolumeTreeItemModel,
 )
-from eyelab.tools import line_tools, area_tools, basic_tools
-import eyepy as ep
-
-import logging
+from eyelab.tools import area_tools, basic_tools, line_tools
+from eyelab.views.ui.ui_scene_tab import Ui_SceneTab
 
 logger = logging.getLogger("eyelab.viewtab")
 

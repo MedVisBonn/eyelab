@@ -1,25 +1,23 @@
 import logging
-import sys
 import os
+import sys
 from functools import partial
 from pathlib import Path
 
-from PySide6 import QtWidgets, QtGui
+import eyepy as ep
+from PySide6 import QtGui, QtWidgets
 from PySide6.QtWidgets import QFileDialog
 
-import eyepy as ep
 from eyelab.config import EYELAB_FOLDER
-
-from eyelab.views.ui.ui_main_window import Ui_MainWindow
-from eyelab.views.workspace import Workspace
-from eyelab.dialogs import ProceedDialog, NotificationDialog
-
+from eyelab.dialogs import NotificationDialog, ProceedDialog
 from eyelab.dialogs.help import (
+    AreaAnnotationHelp,
     IntroductionHelp,
     LayerAnnotationHelp,
-    AreaAnnotationHelp,
     ShortcutHelp,
 )
+from eyelab.views.ui.ui_main_window import Ui_MainWindow
+from eyelab.views.workspace import Workspace
 
 
 class eyelab(QtWidgets.QMainWindow, Ui_MainWindow):
@@ -80,7 +78,6 @@ class eyelab(QtWidgets.QMainWindow, Ui_MainWindow):
         #   ep.drusen(ev.layers["RPE"], ev.layers["BM"], ev.shape), name="Drusen"
         # )
         # self.workspace.set_data(ev)
-
         # self.statusBar().showMessage("Ready")
 
     @property

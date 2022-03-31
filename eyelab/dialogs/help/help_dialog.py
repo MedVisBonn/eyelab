@@ -1,4 +1,5 @@
 from PySide6 import QtWidgets
+
 from eyelab.views.ui.ui_text_window import Ui_TextWindow
 
 

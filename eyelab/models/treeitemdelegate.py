@@ -1,8 +1,9 @@
-from PySide6 import QtWidgets, QtGui, QtCore
+from typing import Union
+
+from PySide6 import QtCore, QtGui, QtWidgets
 from PySide6.QtWidgets import QWidget
 
 from eyelab.models.layereditor import LayerEntry, LayerGroupEntry
-from typing import Union
 
 
 class TreeItemDelegate(QtWidgets.QStyledItemDelegate):

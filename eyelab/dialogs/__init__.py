@@ -1,2 +1,2 @@
 from .addannotation import AddAnnotationDialog
-from .essentials import ProceedDialog, NotificationDialog
+from .essentials import NotificationDialog, ProceedDialog

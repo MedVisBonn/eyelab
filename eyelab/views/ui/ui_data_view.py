@@ -18,9 +18,9 @@ from PySide6.QtCore import (
     QPoint,
     QRect,
     QSize,
+    Qt,
     QTime,
     QUrl,
-    Qt,
 )
 from PySide6.QtGui import (
     QBrush,
@@ -50,6 +50,7 @@ from PySide6.QtWidgets import (
 
 from eyelab.views.enface_view import EnfaceView
 from eyelab.views.volume_view import VolumeView
+
 from . import resources_rc
 
 

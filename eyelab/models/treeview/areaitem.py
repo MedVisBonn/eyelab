@@ -1,8 +1,7 @@
+import eyepy as ep
 import numpy as np
 import qimage2ndarray
-from PySide6 import QtCore, QtWidgets, QtGui
-
-import eyepy as ep
+from PySide6 import QtCore, QtGui, QtWidgets
 
 from eyelab.models.treeview.itemgroup import ItemGroup
 

@@ -1,11 +1,11 @@
+import json
 import logging
-
-from PySide6 import QtWidgets, QtCore
 from typing import List, Tuple
 
-from eyelab.views.ui.ui_proceed_diaolog import Ui_ProceedDialog
+from PySide6 import QtCore, QtWidgets
+
 from eyelab.views.ui.ui_notification_diaolog import Ui_NotificationDialog
-import json
+from eyelab.views.ui.ui_proceed_diaolog import Ui_ProceedDialog
 
 logger = logging.getLogger(__name__)
 

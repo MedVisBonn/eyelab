@@ -8,6 +8,8 @@
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
 
+from oat.modules.annotation.views.enface_view import EnfaceView
+from oat.modules.annotation.views.volume_view import VolumeView
 from PySide6.QtCore import (
     QCoreApplication,
     QDate,
@@ -18,9 +20,9 @@ from PySide6.QtCore import (
     QPoint,
     QRect,
     QSize,
+    Qt,
     QTime,
     QUrl,
-    Qt,
 )
 from PySide6.QtGui import (
     QBrush,
@@ -48,8 +50,6 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from oat.modules.annotation.views.enface_view import EnfaceView
-from oat.modules.annotation.views.volume_view import VolumeView
 from . import resources_rc
 
 

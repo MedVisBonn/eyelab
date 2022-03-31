@@ -1,11 +1,10 @@
+import logging
+
+import eyepy as ep
 from PySide6 import QtCore, QtWidgets
 
 from eyelab.views.graphicsview import CustomGraphicsView
 from eyelab.views.ui.ui_data_view import Ui_DataView
-
-import eyepy as ep
-
-import logging
 
 logger = logging.getLogger("eyelab.workspace.dataview")
 

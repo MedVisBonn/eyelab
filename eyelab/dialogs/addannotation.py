@@ -1,12 +1,13 @@
+import json
 import logging
-
-from PySide6 import QtWidgets, QtCore
 from typing import List, Tuple
+
+from PySide6 import QtCore, QtWidgets
+
+from eyelab.views.ui.ui_add_annotation_dialog import Ui_AddAnnotationDialog
 
 # from eyelab.models.treeview.itemmodel import TreeItemModel
 
-from eyelab.views.ui.ui_add_annotation_dialog import Ui_AddAnnotationDialog
-import json
 
 logger = logging.getLogger(__name__)
 

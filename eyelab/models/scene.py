@@ -1,13 +1,11 @@
+import logging
 from collections import namedtuple
 
-from PySide6 import QtGui, QtCore, QtWidgets
+import eyepy as ep
+from PySide6 import QtCore, QtGui, QtWidgets
 from PySide6.QtCore import QRectF
 
 from eyelab.models.utils import array2qgraphicspixmapitem
-
-import eyepy as ep
-
-import logging
 
 logger = logging.getLogger("eyelab.scene")
 

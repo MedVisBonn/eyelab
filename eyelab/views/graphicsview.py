@@ -1,7 +1,7 @@
 import logging
-
 import math
-from PySide6 import QtCore, QtWidgets, QtGui
+
+from PySide6 import QtCore, QtGui, QtWidgets
 from PySide6.QtWidgets import QGraphicsView
 
 logger = logging.getLogger(__name__)

@@ -1,20 +1,17 @@
 import collections
-
-from PySide6 import QtCore, QtWidgets
-from PySide6.QtCore import QAbstractItemModel
-from eyepy.core.utils import DynamicDefaultDict
-
-from eyelab.models.scene import CustomGraphicsScene
-from eyelab.models.treeview.areaitem import AreaItem
-from eyelab.models.treeview.layeritem import LayerItem
-from eyelab.models.treeview.itemgroup import ItemGroup
-
-from eyelab.dialogs import AddAnnotationDialog
-
 from typing import Union
 
 import eyepy as ep
 import numpy as np
+from eyepy.core.utils import DynamicDefaultDict
+from PySide6 import QtCore, QtWidgets
+from PySide6.QtCore import QAbstractItemModel
+
+from eyelab.dialogs import AddAnnotationDialog
+from eyelab.models.scene import CustomGraphicsScene
+from eyelab.models.treeview.areaitem import AreaItem
+from eyelab.models.treeview.itemgroup import ItemGroup
+from eyelab.models.treeview.layeritem import LayerItem
 
 
 class TreeItemGroup:

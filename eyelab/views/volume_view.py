@@ -1,14 +1,13 @@
-from PySide6 import QtWidgets, QtCore
+import logging
+
+import numpy as np
+from eyepy import EyeVolume
+from PySide6 import QtCore, QtWidgets
 from PySide6.QtCore import QPointF
 
-from eyepy import EyeVolume
-
-from eyelab.views.graphicsview import CustomGraphicsView
-from eyelab.models.scene import Point, Line
+from eyelab.models.scene import Line, Point
 from eyelab.models.viewtab import VolumeTab
-import numpy as np
-
-import logging
+from eyelab.views.graphicsview import CustomGraphicsView
 
 logger = logging.getLogger("eyelab.volumeview")
 

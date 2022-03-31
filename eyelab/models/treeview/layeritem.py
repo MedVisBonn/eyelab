@@ -1,13 +1,12 @@
-from typing import List, Dict, Optional, Any
-
-import numpy as np
-from PySide6 import QtCore, QtWidgets, QtGui
-import eyepy as ep
-
 import logging
+from typing import Any, Dict, List, Optional
+
+import eyepy as ep
+import numpy as np
+from PySide6 import QtCore, QtGui, QtWidgets
+from scipy.interpolate import interp1d
 
 from eyelab.models.treeview.itemgroup import ItemGroup
-from scipy.interpolate import interp1d
 
 logger = logging.getLogger(__name__)
 

@@ -8,6 +8,7 @@
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
 
+from oat.views.custom import CustomGraphicsView
 from PySide6.QtCore import (
     QCoreApplication,
     QDate,
@@ -18,9 +19,9 @@ from PySide6.QtCore import (
     QPoint,
     QRect,
     QSize,
+    Qt,
     QTime,
     QUrl,
-    Qt,
 )
 from PySide6.QtGui import (
     QBrush,
@@ -41,8 +42,6 @@ from PySide6.QtGui import (
     QTransform,
 )
 from PySide6.QtWidgets import QApplication, QSizePolicy, QSpinBox, QVBoxLayout, QWidget
-
-from oat.views.custom import CustomGraphicsView
 
 
 class Ui_Viewer3D(object):

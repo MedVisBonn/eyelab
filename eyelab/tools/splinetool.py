@@ -1,4 +1,5 @@
-from PySide6 import QtGui, QtWidgets, QtCore
+from PySide6 import QtCore, QtGui, QtWidgets
+
 from eyelab.views.ui.ui_spline_options import Ui_splineOptions
 
 
