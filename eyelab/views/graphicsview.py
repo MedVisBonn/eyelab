@@ -129,6 +129,10 @@ class CustomGraphicsView(QGraphicsView):
         super().showEvent(event)
         self.zoomToFit()
 
+    def resizeEvent(self, event: QtGui.QResizeEvent) -> None:
+        super().resizeEvent(event)
+        self.zoomToFit()
+
     def mouseReleaseEvent(self, event: QtGui.QMouseEvent) -> None:
         super().mouseReleaseEvent(event)
         self.update_tool()
