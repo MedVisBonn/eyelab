@@ -5,11 +5,13 @@ from functools import partial
 from pathlib import Path
 
 import eyepy as ep
+import requests
+from packaging import version
 from PySide6 import QtGui, QtWidgets
-from PySide6.QtWidgets import QFileDialog
+from PySide6.QtWidgets import QFileDialog, QMessageBox
 
+import eyelab as el
 from eyelab.config import EYELAB_FOLDER
-from eyelab.dialogs import NotificationDialog, ProceedDialog
 from eyelab.dialogs.help import (
     AreaAnnotationHelp,
     IntroductionHelp,
@@ -71,6 +73,7 @@ class eyelab(QtWidgets.QMainWindow, Ui_MainWindow):
         self.workspace = Workspace(parent=self)
         self.setCentralWidget(self.workspace)
 
+        self.check_version()
         from eyepy.data import load
 
         # ev = load("drusen_patient")
@@ -79,6 +82,21 @@ class eyelab(QtWidgets.QMainWindow, Ui_MainWindow):
         # )
         # self.workspace.set_data(ev)
         # self.statusBar().showMessage("Ready")
+
+    def check_version(self):
+        latest_url = "https://github.com/MedVisBonn/eyelab/releases/latest"
+        current_version = f"v{el.__version__}"
+        latest_version = (requests.get(latest_url).url).split("/")[-1]
+
+        if version.parse(current_version) < version.parse(latest_version):
+            msgBox = QMessageBox()
+            msgBox.setText("A new version of EyeLab is available.")
+            msgBox.setInformativeText(
+                f"You are using version {current_version}. The latest version is {latest_version} and can be found <a href='{latest_url}'>here</a>."
+            )
+            msgBox.setStandardButtons(QMessageBox.Ok)
+            msgBox.setDefaultButton(QMessageBox.Ok)
+            ret = msgBox.exec()
 
     @property
     def start_dir(self):
@@ -89,9 +107,12 @@ class eyelab(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def import_data(self, method, format):
         if not self.workspace.data is None:
-            message = "The import repaces all data you have in your workspace. Do you want to proceed?"
-            dialog = ProceedDialog(message=message, parent=self)
-            if dialog.exec() == QtWidgets.QDialog.Rejected:
+            message = "The import replaces all data you have in your workspace. Do you want to proceed?"
+            ret = QMessageBox.question(
+                self, "EyeLab", message, QMessageBox.Ok | QMessageBox.Cancel
+            )
+
+            if ret == QMessageBox.Cancel:
                 return
 
         if format == "file":
@@ -139,8 +160,7 @@ class eyelab(QtWidgets.QMainWindow, Ui_MainWindow):
 
         if self.workspace.data is None:
             message = "No data available for saving"
-            dialog = NotificationDialog(message=message, parent=self)
-            dialog.exec()
+            QMessageBox.information(self, "EyeLab", message, QMessageBox.Ok)
             return
 
         self.workspace.data.save(self.save_path)
@@ -148,8 +168,11 @@ class eyelab(QtWidgets.QMainWindow, Ui_MainWindow):
     def load(self):
         if self.workspace.data is not None:
             message = "Loading data replaces the current data. Do you want to proceed?"
-            dialog = ProceedDialog(message=message, parent=self)
-            if dialog.exec() == QtWidgets.QDialog.Rejected:
+            ret = QMessageBox.question(
+                self, "EyeLab", message, QMessageBox.Ok | QMessageBox.Cancel
+            )
+
+            if ret == QMessageBox.Cancel:
                 return
 
         path = QFileDialog.getOpenFileName(
@@ -180,23 +203,28 @@ class eyelab(QtWidgets.QMainWindow, Ui_MainWindow):
             message = (
                 "Annotations can only be loaded after importing the corresponding data."
             )
-            dialog = NotificationDialog(message=message, parent=self)
-            dialog.exec()
+            QMessageBox.information(self, "EyeLab", message, QMessageBox.Ok)
             return
         message = "Loading annotations replaces all current annotations. Do you want to proceed?"
-        dialog = ProceedDialog(message=message, parent=self)
-        if dialog.exec() == QtWidgets.QDialog.Accepted:
-            path = QFileDialog.getOpenFileName()[0]
-            self.workspace.data.load_annotations(path)
+        ret = QMessageBox.question(
+            self, "EyeLab", message, QMessageBox.Ok | QMessageBox.Cancel
+        )
+        if ret == QMessageBox.Cancel:
+            return
+        path = QFileDialog.getOpenFileName()[0]
+        self.workspace.data.load_annotations(path)
 
     def closeEvent(self, a0: QtGui.QCloseEvent) -> None:
         # Save all unchanged annotations
         # Todo: Ask for save if there is unsaved work
         if self.workspace.data_changed:
             message = "Do you want to save before closing?"
-            dialog = ProceedDialog(message=message, parent=self)
-            if dialog.exec() == QtWidgets.QDialog.Accepted:
+            ret = QMessageBox.question(
+                self, "EyeLab", message, QMessageBox.Ok | QMessageBox.Cancel
+            )
+            if ret == QMessageBox.Ok:
                 self.actionSaveAnnotations.trigger()
+
         super().closeEvent(a0)
 
 
@@ -224,6 +252,7 @@ def main(log_level=logging.DEBUG):
     logger.info("Starting Application.")
 
     application = QtWidgets.QApplication(sys.argv)
+
     window = eyelab()
     # desktop = QtGui.QScreen().availableGeometry()
     # width = (desktop.width() - window.width()) / 2
