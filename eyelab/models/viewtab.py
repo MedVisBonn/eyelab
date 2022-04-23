@@ -1,7 +1,7 @@
 import logging
 
 import eyepy as ep
-from PySide6 import QtCore, QtWidgets
+from PySide6 import QtCore, QtGui, QtWidgets
 from PySide6.QtWidgets import QWidget
 
 from eyelab.models.treeitemdelegate import TreeItemDelegate
@@ -68,6 +68,15 @@ class ViewTab(QWidget, Ui_SceneTab):
         )
 
         self.imageTreeView.expandAll()
+
+        self.imageTreeView.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
+        duplicate_action = QtGui.QAction(self)
+        duplicate_action.setText("Duplicate")
+        duplicate_action.triggered.connect(self.duplicate)
+        self.imageTreeView.addAction(duplicate_action)
+
+    def duplicate(self):
+        self.model.duplicate(self.imageTreeView.selectionModel().currentIndex())
 
     def tools(self):
         return self._tools

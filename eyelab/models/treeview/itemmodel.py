@@ -244,6 +244,16 @@ class VolumeTreeItemModel(TreeItemModel):
 
         self._scenes = {}
 
+    def duplicate(self, index: QtCore.QModelIndex):
+        annotation = index.internalPointer().annotation
+        name = annotation.name
+        data = annotation.data
+
+        if index.parent() == self.layers_index:
+            self.add_layer_annotation(name=f"Duplicate {name}", height_map=data)
+        elif index.parent() == self.areas_index:
+            self.add_voxel_annotation(name=f"Duplicate {name}", voxel_map=data)
+
     @property
     def scene(self) -> CustomGraphicsScene:
         if not self.current_slice in self._scenes:
@@ -358,9 +368,9 @@ class VolumeTreeItemModel(TreeItemModel):
             self.layoutChanged.emit()
             self.annotations.update()
 
-    def add_layer_annotation(self, name, color="FF0000"):
+    def add_layer_annotation(self, name, height_map=None, color="FF0000"):
         # Add to EyeVolume
-        layer = self._data.add_layer_annotation(name=name)
+        layer = self._data.add_layer_annotation(height_map=height_map, name=name)
         layer.meta = {
             **{"visible": True, "z_value": 0, "current_color": color},
             **layer.meta,
@@ -378,9 +388,9 @@ class VolumeTreeItemModel(TreeItemModel):
             item = LayerItem(data=layer, index=index, parent=layers_item_group)
             self.annotation_items[id(layer)][index] = item
 
-    def add_voxel_annotation(self, name, color="FF0000"):
+    def add_voxel_annotation(self, name, voxel_map=None, color="FF0000"):
         # Add to EyeVolume
-        voxel_map = self._data.add_voxel_annotation(name=name)
+        voxel_map = self._data.add_voxel_annotation(voxel_map=voxel_map, name=name)
         voxel_map.meta = {
             **{"visible": True, "z_value": 0, "current_color": color},
             **voxel_map.meta,
