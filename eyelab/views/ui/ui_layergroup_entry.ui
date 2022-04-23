@@ -100,31 +100,15 @@
     </widget>
    </item>
    <item>
-    <widget class="QLabel" name="label">
-     <property name="minimumSize">
-      <size>
-       <width>0</width>
-       <height>26</height>
-      </size>
+    <widget class="QLineEdit" name="labelEdit">
+     <property name="enabled">
+      <bool>true</bool>
      </property>
-     <property name="maximumSize">
-      <size>
-       <width>180</width>
-       <height>26</height>
-      </size>
+     <property name="frame">
+      <bool>false</bool>
      </property>
-     <property name="font">
-      <font>
-       <pointsize>10</pointsize>
-       <weight>75</weight>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="contextMenuPolicy">
-      <enum>Qt::NoContextMenu</enum>
-     </property>
-     <property name="text">
-      <string>Layer Group Name</string>
+     <property name="readOnly">
+      <bool>true</bool>
      </property>
     </widget>
    </item>

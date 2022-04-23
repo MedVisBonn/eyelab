@@ -3,51 +3,14 @@
 ################################################################################
 ## Form generated from reading UI file 'ui_layergroup_entry.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.2.4
+## Created by: Qt User Interface Compiler version 6.1.3
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
 
-from PySide6.QtCore import (
-    QCoreApplication,
-    QDate,
-    QDateTime,
-    QLocale,
-    QMetaObject,
-    QObject,
-    QPoint,
-    QRect,
-    QSize,
-    Qt,
-    QTime,
-    QUrl,
-)
-from PySide6.QtGui import (
-    QBrush,
-    QColor,
-    QConicalGradient,
-    QCursor,
-    QFont,
-    QFontDatabase,
-    QGradient,
-    QIcon,
-    QImage,
-    QKeySequence,
-    QLinearGradient,
-    QPainter,
-    QPalette,
-    QPixmap,
-    QRadialGradient,
-    QTransform,
-)
-from PySide6.QtWidgets import (
-    QApplication,
-    QHBoxLayout,
-    QLabel,
-    QSizePolicy,
-    QToolButton,
-    QWidget,
-)
+from PySide6.QtCore import *  # type: ignore
+from PySide6.QtGui import *  # type: ignore
+from PySide6.QtWidgets import *  # type: ignore
 
 from . import resources_rc
 
@@ -96,17 +59,13 @@ class Ui_LayerGroupEntry(object):
 
         self.horizontalLayout_2.addWidget(self.hideButton)
 
-        self.label = QLabel(LayerGroupEntry)
-        self.label.setObjectName(u"label")
-        self.label.setMinimumSize(QSize(0, 26))
-        self.label.setMaximumSize(QSize(180, 26))
-        font1 = QFont()
-        font1.setPointSize(10)
-        font1.setBold(True)
-        self.label.setFont(font1)
-        self.label.setContextMenuPolicy(Qt.NoContextMenu)
+        self.labelEdit = QLineEdit(LayerGroupEntry)
+        self.labelEdit.setObjectName(u"labelEdit")
+        self.labelEdit.setEnabled(True)
+        self.labelEdit.setFrame(False)
+        self.labelEdit.setReadOnly(True)
 
-        self.horizontalLayout_2.addWidget(self.label)
+        self.horizontalLayout_2.addWidget(self.labelEdit)
 
         self.retranslateUi(LayerGroupEntry)
 
@@ -120,9 +79,6 @@ class Ui_LayerGroupEntry(object):
         )
         self.hideButton.setText(
             QCoreApplication.translate("LayerGroupEntry", u"...", None)
-        )
-        self.label.setText(
-            QCoreApplication.translate("LayerGroupEntry", u"Layer Group Name", None)
         )
 
     # retranslateUi

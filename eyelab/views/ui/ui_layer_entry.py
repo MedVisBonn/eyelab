@@ -3,51 +3,14 @@
 ################################################################################
 ## Form generated from reading UI file 'ui_layer_entry.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.2.4
+## Created by: Qt User Interface Compiler version 6.1.3
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
 
-from PySide6.QtCore import (
-    QCoreApplication,
-    QDate,
-    QDateTime,
-    QLocale,
-    QMetaObject,
-    QObject,
-    QPoint,
-    QRect,
-    QSize,
-    Qt,
-    QTime,
-    QUrl,
-)
-from PySide6.QtGui import (
-    QBrush,
-    QColor,
-    QConicalGradient,
-    QCursor,
-    QFont,
-    QFontDatabase,
-    QGradient,
-    QIcon,
-    QImage,
-    QKeySequence,
-    QLinearGradient,
-    QPainter,
-    QPalette,
-    QPixmap,
-    QRadialGradient,
-    QTransform,
-)
-from PySide6.QtWidgets import (
-    QApplication,
-    QHBoxLayout,
-    QLabel,
-    QSizePolicy,
-    QToolButton,
-    QWidget,
-)
+from PySide6.QtCore import *  # type: ignore
+from PySide6.QtGui import *  # type: ignore
+from PySide6.QtWidgets import *  # type: ignore
 
 from . import resources_rc
 
@@ -93,18 +56,12 @@ class Ui_LayerEntry(object):
 
         self.horizontalLayout.addWidget(self.colorButton)
 
-        self.label = QLabel(LayerEntry)
-        self.label.setObjectName(u"label")
-        font = QFont()
-        font.setPointSize(8)
-        self.label.setFont(font)
-        self.label.setContextMenuPolicy(Qt.ActionsContextMenu)
-        self.label.setAutoFillBackground(False)
-        self.label.setStyleSheet(u"")
-        self.label.setScaledContents(False)
-        self.label.setWordWrap(False)
+        self.labelEdit = QLineEdit(LayerEntry)
+        self.labelEdit.setObjectName(u"labelEdit")
+        self.labelEdit.setMouseTracking(False)
+        self.labelEdit.setFrame(False)
 
-        self.horizontalLayout.addWidget(self.label)
+        self.horizontalLayout.addWidget(self.labelEdit)
 
         self.retranslateUi(LayerEntry)
 
@@ -118,8 +75,5 @@ class Ui_LayerEntry(object):
         )
         self.hideButton.setText(QCoreApplication.translate("LayerEntry", u"...", None))
         self.colorButton.setText("")
-        self.label.setText(
-            QCoreApplication.translate("LayerEntry", u"Layer Name", None)
-        )
 
     # retranslateUi

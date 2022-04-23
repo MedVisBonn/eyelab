@@ -37,7 +37,7 @@ class TreeItemDelegate(QtWidgets.QStyledItemDelegate):
 
     def setEditorData(self, editor: QWidget, index: QtCore.QModelIndex) -> None:
         data = index.model().data(index, QtCore.Qt.EditRole)
-        editor.label.setText(str(data["name"]))
+        editor.labelEdit.setText(str(data["name"]))
         editor.set_visible(data["visible"])
         if type(editor) == LayerEntry:
             editor.set_color(data["current_color"].upper())
@@ -48,7 +48,7 @@ class TreeItemDelegate(QtWidgets.QStyledItemDelegate):
         model: QtCore.QAbstractItemModel,
         index: QtCore.QModelIndex,
     ) -> None:
-        data = {"visible": editor.visible, "name": editor.label.text()}
+        data = {"visible": editor.visible, "name": editor.labelEdit.text()}
         if type(editor) is LayerEntry:
             data["current_color"] = editor.color
 

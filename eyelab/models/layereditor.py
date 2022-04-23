@@ -75,13 +75,8 @@ class LayerEntry(QWidget, Ui_LayerEntry):
         self.colorButton.clicked.connect(self.set_color)
         self.colorDialog = QtWidgets.QColorDialog()
 
-    def contextMenuEvent(self, event: QtGui.QContextMenuEvent) -> None:
-        if self.label.text() == "RPE":
-            contextMenu = QtWidgets.QMenu(self)
-            idealRPE = contextMenu.addAction("Compute idealRPE")
-            action = contextMenu.exec_(self.mapToGlobal(event.pos()))
-            if action == idealRPE:
-                print("Smart computations happening")
+        self.labelEdit.textChanged.connect(self.editorChanged)
+        self.labelEdit.mousePressEvent = lambda x: self.mousePressEvent(x)
 
     def set_color(self, color=None):
         if not color:
@@ -116,3 +111,6 @@ class LayerEntry(QWidget, Ui_LayerEntry):
     def show(self):
         self.visible = True
         self.hideButton.setIcon(self.visible_icon)
+
+    def mouseDoubleClickEvent(self, event: QtGui.QMouseEvent) -> None:
+        self.labelEdit.setFrame(True)

@@ -108,28 +108,11 @@
     </widget>
    </item>
    <item>
-    <widget class="QLabel" name="label">
-     <property name="font">
-      <font>
-       <pointsize>8</pointsize>
-      </font>
-     </property>
-     <property name="contextMenuPolicy">
-      <enum>Qt::ActionsContextMenu</enum>
-     </property>
-     <property name="autoFillBackground">
+    <widget class="QLineEdit" name="labelEdit">
+     <property name="mouseTracking">
       <bool>false</bool>
      </property>
-     <property name="styleSheet">
-      <string notr="true"/>
-     </property>
-     <property name="text">
-      <string>Layer Name</string>
-     </property>
-     <property name="scaledContents">
-      <bool>false</bool>
-     </property>
-     <property name="wordWrap">
+     <property name="frame">
       <bool>false</bool>
      </property>
     </widget>
