@@ -56,12 +56,10 @@ class Ui_LayerEntry(object):
 
         self.horizontalLayout.addWidget(self.colorButton)
 
-        self.labelEdit = QLineEdit(LayerEntry)
-        self.labelEdit.setObjectName(u"labelEdit")
-        self.labelEdit.setMouseTracking(False)
-        self.labelEdit.setFrame(False)
+        self.label = QLabel(LayerEntry)
+        self.label.setObjectName(u"label")
 
-        self.horizontalLayout.addWidget(self.labelEdit)
+        self.horizontalLayout.addWidget(self.label)
 
         self.retranslateUi(LayerEntry)
 
@@ -75,5 +73,6 @@ class Ui_LayerEntry(object):
         )
         self.hideButton.setText(QCoreApplication.translate("LayerEntry", u"...", None))
         self.colorButton.setText("")
+        self.label.setText("")
 
     # retranslateUi

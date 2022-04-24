@@ -59,13 +59,10 @@ class Ui_LayerGroupEntry(object):
 
         self.horizontalLayout_2.addWidget(self.hideButton)
 
-        self.labelEdit = QLineEdit(LayerGroupEntry)
-        self.labelEdit.setObjectName(u"labelEdit")
-        self.labelEdit.setEnabled(True)
-        self.labelEdit.setFrame(False)
-        self.labelEdit.setReadOnly(True)
+        self.label = QLabel(LayerGroupEntry)
+        self.label.setObjectName(u"label")
 
-        self.horizontalLayout_2.addWidget(self.labelEdit)
+        self.horizontalLayout_2.addWidget(self.label)
 
         self.retranslateUi(LayerGroupEntry)
 
@@ -80,5 +77,6 @@ class Ui_LayerGroupEntry(object):
         self.hideButton.setText(
             QCoreApplication.translate("LayerGroupEntry", u"...", None)
         )
+        self.label.setText("")
 
     # retranslateUi

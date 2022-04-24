@@ -75,8 +75,27 @@ class LayerEntry(QWidget, Ui_LayerEntry):
         self.colorButton.clicked.connect(self.set_color)
         self.colorDialog = QtWidgets.QColorDialog()
 
-        self.labelEdit.textChanged.connect(self.editorChanged)
-        self.labelEdit.mousePressEvent = lambda x: self.mousePressEvent(x)
+        self.label.mouseDoubleClickEvent = self._enable_label_edit_event
+
+        self.labelEdit = QtWidgets.QLineEdit()
+        self.labelEdit.editingFinished.connect(self._disable_label_edit)
+        self.labelEdit.hide()
+        self.horizontalLayout.addWidget(self.labelEdit)
+
+    def _enable_label_edit_event(self, event):
+        self.labelEdit.setText(self.label.text())
+        self.label.hide()
+        self.labelEdit.show()
+
+    def _disable_label_edit(self):
+        self.label.setText(self.labelEdit.text())
+        self.labelEdit.hide()
+        self.label.show()
+        self.editorChanged.emit()
+
+    def leaveEvent(self, event: QtCore.QEvent) -> None:
+        if self.labelEdit.isVisible():
+            self._disable_label_edit()
 
     def set_color(self, color=None):
         if not color:
