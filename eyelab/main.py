@@ -86,7 +86,11 @@ class eyelab(QtWidgets.QMainWindow, Ui_MainWindow):
     def check_version(self):
         latest_url = "https://github.com/MedVisBonn/eyelab/releases/latest"
         current_version = f"v{el.__version__}"
-        latest_version = (requests.get(latest_url).url).split("/")[-1]
+
+        try:
+            latest_version = (requests.get(latest_url).url).split("/")[-1]
+        except requests.ConnectionError:
+            return
 
         if version.parse(current_version) < version.parse(latest_version):
             msgBox = QMessageBox()
