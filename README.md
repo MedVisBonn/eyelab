@@ -127,7 +127,7 @@ To run EyeLab run `poetry run eyelab/main.py`
 ## Building the Windows executable
 
 ```shell
-poetry run pyinstaller eyelab/main.py --name EyeLab -i icon.ico --hiddenimport imagecodecs --collect-all imagecodecs --onefile
+poetry runpyinstaller --hidden-import imagecodecs --collect-submodules imagecodecs --name EyeLab -i icon.ico eyelab\main.py --onefile
 ```
 
 # Related Projects:
