@@ -2,6 +2,21 @@
 
 <!--next-version-placeholder-->
 
+## v0.2.0 (2022-04-25)
+### Feature
+* **layereditor.py:** Enable editing the annotation name ([`7774e5d`](https://github.com/MedVisBonn/eyelab/commit/7774e5dc1597bf7da039fdb46186f51a845873b4))
+* **viewtab.py:** Enable duplication of annotations ([`6a1174b`](https://github.com/MedVisBonn/eyelab/commit/6a1174bc6e8ddb09902ae5fd1db750b18fa62bd3))
+
+### Fix
+* **main.py:** Add try/except block for version checking ([`650622f`](https://github.com/MedVisBonn/eyelab/commit/650622f6b4d734f0b9ab68530234bb40ff785a41))
+* **layereditor.py:** Show qlineedit when qlabel is double click and hide if edit is finished or layereditor is left with mouse ([`a91b44a`](https://github.com/MedVisBonn/eyelab/commit/a91b44a41904c83943f0d638dc89b2a0f967dc1c))
+* **graphicsview.py:** Fit images to view when resizing ([`78d63f8`](https://github.com/MedVisBonn/eyelab/commit/78d63f86b43de64a9d3b964a50c4995766645fb1))
+* **pyproject.toml:** Freeze PySide6 version to 6.1.3 because of missing DLL on Windows 7 in later versions ([`be3f6ee`](https://github.com/MedVisBonn/eyelab/commit/be3f6ee9834df44035a0557de9327d741eb09739))
+
+### Documentation
+* **README.md:** Update pyinstaller command ([`b18f29d`](https://github.com/MedVisBonn/eyelab/commit/b18f29db819015a1a9a0f7a3aab70fdee86f68a5))
+* **README.md:** Add PyPI and DOI badge ([`990a7f4`](https://github.com/MedVisBonn/eyelab/commit/990a7f41d8ab43adc779eaad80c761693e5250c2))
+
 ## v0.1.1 (2022-03-31)
 ### Fix
 * **eyelab:** Update to eyepie v0.6.3 for intensity_transform fix ([`572f2a8`](https://github.com/MedVisBonn/eyelab/commit/572f2a8c83ecbfc8ef1fd786fa35a3dd68934e9c))
