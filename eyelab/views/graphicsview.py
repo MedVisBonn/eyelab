@@ -25,7 +25,6 @@ class CustomGraphicsView(QGraphicsView):
         # Get Move events even if no button is pressed
         self.setMouseTracking(True)
         self.deactivate_scroll_bars()
-        self.mouse_grabber_cache = None
 
         self.setLineWidth(3)
         self.setPalette(QtGui.QPalette(QtCore.Qt.red, QtCore.Qt.black))

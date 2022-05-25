@@ -81,6 +81,9 @@ class VolumeView(CustomGraphicsView):
             else:
                 self.view_tab.last_slice()
             self.setScene(self.view_tab.model.scene)
+            self.view_tab.model.activate(
+                self.view_tab.imageTreeView.selectionModel().currentIndex()
+            )
 
             if self.linked_navigation:
                 current_slice = self.view_tab.model.current_slice

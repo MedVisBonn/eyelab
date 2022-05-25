@@ -1,5 +1,5 @@
 from eyepy import EyeEnface
-from PySide6 import QtWidgets
+from PySide6 import QtGui, QtWidgets
 from PySide6.QtCore import QPointF, Qt
 
 from eyelab.models.viewtab import EnfaceTab
@@ -10,6 +10,16 @@ class EnfaceView(CustomGraphicsView):
     def __init__(self, parent, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
         self.setTransformationAnchor(QtWidgets.QGraphicsView.AnchorUnderMouse)
+
+        bscan_overlay_action = QtGui.QAction()
+        bscan_overlay_action.setCheckable(True)
+        bscan_overlay_action.setChecked(True)
+        bscan_overlay_action.setText("B-scan positions")
+        bscan_overlay_action.toggled.connect(self.test)
+        self.addAction(bscan_overlay_action)
+
+    def test(self):
+        print("test")
 
     def set_data(self, data: EyeEnface, name: str):
         self.data = data

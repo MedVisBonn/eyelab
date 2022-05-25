@@ -27,36 +27,36 @@
    </property>
    <widget class="QMenu" name="menuFile">
     <property name="title">
-     <string>File</string>
+     <string>&amp;File</string>
     </property>
     <widget class="QMenu" name="menuUpload">
      <property name="title">
       <string>Import</string>
      </property>
-     <addaction name="actionImportVol"/>
-     <addaction name="actionImportHEXML"/>
+     <addaction name="action_import_vol"/>
+     <addaction name="action_import_hexml"/>
      <addaction name="separator"/>
-     <addaction name="actionImportRETOUCH"/>
-     <addaction name="actionImportDuke"/>
+     <addaction name="action_import_retouch"/>
+     <addaction name="action_import_duke"/>
      <addaction name="separator"/>
-     <addaction name="actionImportBSFolder"/>
+     <addaction name="action_import_bsfolder"/>
     </widget>
     <widget class="QMenu" name="menuAnnotations">
      <property name="enabled">
-      <bool>true</bool>
+      <bool>false</bool>
      </property>
      <property name="title">
       <string>Annotations</string>
      </property>
-     <addaction name="actionLoadAnnotations"/>
+     <addaction name="action_load_annotations"/>
      <addaction name="separator"/>
-     <addaction name="actionSaveAnnotations"/>
-     <addaction name="actionSaveAnnotationsAs"/>
+     <addaction name="action_save_annotations"/>
+     <addaction name="action_save_annotations_as"/>
     </widget>
     <addaction name="separator"/>
-    <addaction name="actionOpen"/>
-    <addaction name="actionSave"/>
-    <addaction name="actionSave_As"/>
+    <addaction name="action_open"/>
+    <addaction name="action_save"/>
+    <addaction name="action_save_as"/>
     <addaction name="separator"/>
     <addaction name="menuUpload"/>
     <addaction name="separator"/>
@@ -64,34 +64,32 @@
    </widget>
    <widget class="QMenu" name="menuEdit">
     <property name="enabled">
-     <bool>false</bool>
+     <bool>true</bool>
     </property>
     <property name="tearOffEnabled">
      <bool>false</bool>
     </property>
     <property name="title">
-     <string/>
+     <string>&amp;Edit</string>
     </property>
-    <addaction name="actionUndo"/>
-    <addaction name="actionRedo"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
      <string>Help</string>
     </property>
-    <addaction name="actionIntroduction"/>
-    <addaction name="actionLayerAnnotationGuide"/>
-    <addaction name="actionAreaAnnotationGuide"/>
-    <addaction name="actionRegistrationGuide"/>
+    <addaction name="action_introduction"/>
+    <addaction name="action_layer_annotation_guide"/>
+    <addaction name="action_area_annotation_guide"/>
+    <addaction name="action_registration_guide"/>
     <addaction name="separator"/>
-    <addaction name="actionShortcutSheet"/>
+    <addaction name="action_shortcut_sheet"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <action name="actionUndo">
+  <action name="action_undo">
    <property name="checkable">
     <bool>false</bool>
    </property>
@@ -103,50 +101,56 @@
      <normaloff>:/icons/icons/baseline-undo-24px.svg</normaloff>:/icons/icons/baseline-undo-24px.svg</iconset>
    </property>
    <property name="text">
-    <string>Undo</string>
+    <string>&amp;Undo</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+Z</string>
    </property>
   </action>
-  <action name="actionRedo">
+  <action name="action_redo">
    <property name="icon">
     <iconset resource="resources.qrc">
      <normaloff>:/icons/icons/baseline-redo-24px.svg</normaloff>:/icons/icons/baseline-redo-24px.svg</iconset>
    </property>
    <property name="text">
-    <string>Redo</string>
+    <string>&amp;Redo</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+Y</string>
    </property>
   </action>
-  <action name="actionImportVol">
+  <action name="action_import_vol">
    <property name="text">
     <string>Heyex Raw (.vol)</string>
    </property>
   </action>
-  <action name="actionSaveAnnotations">
+  <action name="action_save_annotations">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>Save</string>
    </property>
+   <property name="visible">
+    <bool>true</bool>
+   </property>
   </action>
-  <action name="actionImportBSFolder">
+  <action name="action_import_bsfolder">
    <property name="text">
     <string>B-Scans from folder</string>
    </property>
   </action>
-  <action name="actionLayerAnnotationGuide">
+  <action name="action_layer_annotation_guide">
    <property name="text">
     <string>Layer Annotation Guide</string>
    </property>
   </action>
-  <action name="actionAreaAnnotationGuide">
+  <action name="action_area_annotation_guide">
    <property name="text">
     <string>Area Annotation Guide</string>
    </property>
   </action>
-  <action name="actionRegistrationGuide">
+  <action name="action_registration_guide">
    <property name="text">
     <string>Registration Guide</string>
    </property>
@@ -154,57 +158,75 @@
     <bool>false</bool>
    </property>
   </action>
-  <action name="actionShortcutSheet">
+  <action name="action_shortcut_sheet">
    <property name="text">
     <string>Shortcut Sheet</string>
    </property>
   </action>
-  <action name="actionIntroduction">
+  <action name="action_introduction">
    <property name="text">
     <string>Introduction</string>
    </property>
   </action>
-  <action name="actionImportRETOUCH">
+  <action name="action_import_retouch">
    <property name="text">
     <string>RETOUCH</string>
    </property>
   </action>
-  <action name="actionImportDuke">
+  <action name="action_import_duke">
    <property name="text">
     <string>Duke (Farsiu 2014)</string>
    </property>
   </action>
-  <action name="actionImportHEXML">
+  <action name="action_import_hexml">
    <property name="text">
     <string>Heyex XML (.xml)</string>
    </property>
   </action>
-  <action name="actionLoadAnnotations">
+  <action name="action_load_annotations">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>Load</string>
    </property>
    <property name="visible">
-    <bool>false</bool>
+    <bool>true</bool>
    </property>
   </action>
-  <action name="actionSaveAnnotationsAs">
+  <action name="action_save_annotations_as">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>Save As</string>
    </property>
-  </action>
-  <action name="actionOpen">
-   <property name="text">
-    <string>Open</string>
+   <property name="visible">
+    <bool>true</bool>
    </property>
   </action>
-  <action name="actionSave">
+  <action name="action_open">
    <property name="text">
-    <string>Save</string>
+    <string>&amp;Open</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
    </property>
   </action>
-  <action name="actionSave_As">
+  <action name="action_save">
    <property name="text">
-    <string>Save As</string>
+    <string>&amp;Save</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
+   </property>
+  </action>
+  <action name="action_save_as">
+   <property name="text">
+    <string>Save &amp;As</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+A</string>
    </property>
   </action>
  </widget>

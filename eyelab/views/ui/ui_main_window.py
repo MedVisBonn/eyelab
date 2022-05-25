@@ -20,56 +20,63 @@ class Ui_MainWindow(object):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
         MainWindow.resize(836, 618)
-        self.actionUndo = QAction(MainWindow)
-        self.actionUndo.setObjectName(u"actionUndo")
-        self.actionUndo.setCheckable(False)
-        self.actionUndo.setEnabled(True)
+        self.action_undo = QAction(MainWindow)
+        self.action_undo.setObjectName(u"action_undo")
+        self.action_undo.setCheckable(False)
+        self.action_undo.setEnabled(True)
         icon = QIcon()
         icon.addFile(
             u":/icons/icons/baseline-undo-24px.svg", QSize(), QIcon.Normal, QIcon.Off
         )
-        self.actionUndo.setIcon(icon)
-        self.actionRedo = QAction(MainWindow)
-        self.actionRedo.setObjectName(u"actionRedo")
+        self.action_undo.setIcon(icon)
+        self.action_redo = QAction(MainWindow)
+        self.action_redo.setObjectName(u"action_redo")
         icon1 = QIcon()
         icon1.addFile(
             u":/icons/icons/baseline-redo-24px.svg", QSize(), QIcon.Normal, QIcon.Off
         )
-        self.actionRedo.setIcon(icon1)
-        self.actionImportVol = QAction(MainWindow)
-        self.actionImportVol.setObjectName(u"actionImportVol")
-        self.actionSaveAnnotations = QAction(MainWindow)
-        self.actionSaveAnnotations.setObjectName(u"actionSaveAnnotations")
-        self.actionImportBSFolder = QAction(MainWindow)
-        self.actionImportBSFolder.setObjectName(u"actionImportBSFolder")
-        self.actionLayerAnnotationGuide = QAction(MainWindow)
-        self.actionLayerAnnotationGuide.setObjectName(u"actionLayerAnnotationGuide")
-        self.actionAreaAnnotationGuide = QAction(MainWindow)
-        self.actionAreaAnnotationGuide.setObjectName(u"actionAreaAnnotationGuide")
-        self.actionRegistrationGuide = QAction(MainWindow)
-        self.actionRegistrationGuide.setObjectName(u"actionRegistrationGuide")
-        self.actionRegistrationGuide.setVisible(False)
-        self.actionShortcutSheet = QAction(MainWindow)
-        self.actionShortcutSheet.setObjectName(u"actionShortcutSheet")
-        self.actionIntroduction = QAction(MainWindow)
-        self.actionIntroduction.setObjectName(u"actionIntroduction")
-        self.actionImportRETOUCH = QAction(MainWindow)
-        self.actionImportRETOUCH.setObjectName(u"actionImportRETOUCH")
-        self.actionImportDuke = QAction(MainWindow)
-        self.actionImportDuke.setObjectName(u"actionImportDuke")
-        self.actionImportHEXML = QAction(MainWindow)
-        self.actionImportHEXML.setObjectName(u"actionImportHEXML")
-        self.actionLoadAnnotations = QAction(MainWindow)
-        self.actionLoadAnnotations.setObjectName(u"actionLoadAnnotations")
-        self.actionLoadAnnotations.setVisible(False)
-        self.actionSaveAnnotationsAs = QAction(MainWindow)
-        self.actionSaveAnnotationsAs.setObjectName(u"actionSaveAnnotationsAs")
-        self.actionOpen = QAction(MainWindow)
-        self.actionOpen.setObjectName(u"actionOpen")
-        self.actionSave = QAction(MainWindow)
-        self.actionSave.setObjectName(u"actionSave")
-        self.actionSave_As = QAction(MainWindow)
-        self.actionSave_As.setObjectName(u"actionSave_As")
+        self.action_redo.setIcon(icon1)
+        self.action_import_vol = QAction(MainWindow)
+        self.action_import_vol.setObjectName(u"action_import_vol")
+        self.action_save_annotations = QAction(MainWindow)
+        self.action_save_annotations.setObjectName(u"action_save_annotations")
+        self.action_save_annotations.setEnabled(True)
+        self.action_save_annotations.setVisible(True)
+        self.action_import_bsfolder = QAction(MainWindow)
+        self.action_import_bsfolder.setObjectName(u"action_import_bsfolder")
+        self.action_layer_annotation_guide = QAction(MainWindow)
+        self.action_layer_annotation_guide.setObjectName(
+            u"action_layer_annotation_guide"
+        )
+        self.action_area_annotation_guide = QAction(MainWindow)
+        self.action_area_annotation_guide.setObjectName(u"action_area_annotation_guide")
+        self.action_registration_guide = QAction(MainWindow)
+        self.action_registration_guide.setObjectName(u"action_registration_guide")
+        self.action_registration_guide.setVisible(False)
+        self.action_shortcut_sheet = QAction(MainWindow)
+        self.action_shortcut_sheet.setObjectName(u"action_shortcut_sheet")
+        self.action_introduction = QAction(MainWindow)
+        self.action_introduction.setObjectName(u"action_introduction")
+        self.action_import_retouch = QAction(MainWindow)
+        self.action_import_retouch.setObjectName(u"action_import_retouch")
+        self.action_import_duke = QAction(MainWindow)
+        self.action_import_duke.setObjectName(u"action_import_duke")
+        self.action_import_hexml = QAction(MainWindow)
+        self.action_import_hexml.setObjectName(u"action_import_hexml")
+        self.action_load_annotations = QAction(MainWindow)
+        self.action_load_annotations.setObjectName(u"action_load_annotations")
+        self.action_load_annotations.setEnabled(True)
+        self.action_load_annotations.setVisible(True)
+        self.action_save_annotations_as = QAction(MainWindow)
+        self.action_save_annotations_as.setObjectName(u"action_save_annotations_as")
+        self.action_save_annotations_as.setEnabled(True)
+        self.action_save_annotations_as.setVisible(True)
+        self.action_open = QAction(MainWindow)
+        self.action_open.setObjectName(u"action_open")
+        self.action_save = QAction(MainWindow)
+        self.action_save.setObjectName(u"action_save")
+        self.action_save_as = QAction(MainWindow)
+        self.action_save_as.setObjectName(u"action_save_as")
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         self.verticalLayout = QVBoxLayout(self.centralwidget)
@@ -84,10 +91,10 @@ class Ui_MainWindow(object):
         self.menuUpload.setObjectName(u"menuUpload")
         self.menuAnnotations = QMenu(self.menuFile)
         self.menuAnnotations.setObjectName(u"menuAnnotations")
-        self.menuAnnotations.setEnabled(True)
+        self.menuAnnotations.setEnabled(False)
         self.menuEdit = QMenu(self.menubar)
         self.menuEdit.setObjectName(u"menuEdit")
-        self.menuEdit.setEnabled(False)
+        self.menuEdit.setEnabled(True)
         self.menuEdit.setTearOffEnabled(False)
         self.menuHelp = QMenu(self.menubar)
         self.menuHelp.setObjectName(u"menuHelp")
@@ -100,32 +107,30 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menuEdit.menuAction())
         self.menubar.addAction(self.menuHelp.menuAction())
         self.menuFile.addSeparator()
-        self.menuFile.addAction(self.actionOpen)
-        self.menuFile.addAction(self.actionSave)
-        self.menuFile.addAction(self.actionSave_As)
+        self.menuFile.addAction(self.action_open)
+        self.menuFile.addAction(self.action_save)
+        self.menuFile.addAction(self.action_save_as)
         self.menuFile.addSeparator()
         self.menuFile.addAction(self.menuUpload.menuAction())
         self.menuFile.addSeparator()
         self.menuFile.addAction(self.menuAnnotations.menuAction())
-        self.menuUpload.addAction(self.actionImportVol)
-        self.menuUpload.addAction(self.actionImportHEXML)
+        self.menuUpload.addAction(self.action_import_vol)
+        self.menuUpload.addAction(self.action_import_hexml)
         self.menuUpload.addSeparator()
-        self.menuUpload.addAction(self.actionImportRETOUCH)
-        self.menuUpload.addAction(self.actionImportDuke)
+        self.menuUpload.addAction(self.action_import_retouch)
+        self.menuUpload.addAction(self.action_import_duke)
         self.menuUpload.addSeparator()
-        self.menuUpload.addAction(self.actionImportBSFolder)
-        self.menuAnnotations.addAction(self.actionLoadAnnotations)
+        self.menuUpload.addAction(self.action_import_bsfolder)
+        self.menuAnnotations.addAction(self.action_load_annotations)
         self.menuAnnotations.addSeparator()
-        self.menuAnnotations.addAction(self.actionSaveAnnotations)
-        self.menuAnnotations.addAction(self.actionSaveAnnotationsAs)
-        self.menuEdit.addAction(self.actionUndo)
-        self.menuEdit.addAction(self.actionRedo)
-        self.menuHelp.addAction(self.actionIntroduction)
-        self.menuHelp.addAction(self.actionLayerAnnotationGuide)
-        self.menuHelp.addAction(self.actionAreaAnnotationGuide)
-        self.menuHelp.addAction(self.actionRegistrationGuide)
+        self.menuAnnotations.addAction(self.action_save_annotations)
+        self.menuAnnotations.addAction(self.action_save_annotations_as)
+        self.menuHelp.addAction(self.action_introduction)
+        self.menuHelp.addAction(self.action_layer_annotation_guide)
+        self.menuHelp.addAction(self.action_area_annotation_guide)
+        self.menuHelp.addAction(self.action_registration_guide)
         self.menuHelp.addSeparator()
-        self.menuHelp.addAction(self.actionShortcutSheet)
+        self.menuHelp.addAction(self.action_shortcut_sheet)
 
         self.retranslateUi(MainWindow)
 
@@ -137,70 +142,93 @@ class Ui_MainWindow(object):
         MainWindow.setWindowTitle(
             QCoreApplication.translate("MainWindow", u"EyeLab", None)
         )
-        self.actionUndo.setText(QCoreApplication.translate("MainWindow", u"Undo", None))
+        self.action_undo.setText(
+            QCoreApplication.translate("MainWindow", u"&Undo", None)
+        )
         # if QT_CONFIG(shortcut)
-        self.actionUndo.setShortcut(
+        self.action_undo.setShortcut(
             QCoreApplication.translate("MainWindow", u"Ctrl+Z", None)
         )
         # endif // QT_CONFIG(shortcut)
-        self.actionRedo.setText(QCoreApplication.translate("MainWindow", u"Redo", None))
+        self.action_redo.setText(
+            QCoreApplication.translate("MainWindow", u"&Redo", None)
+        )
         # if QT_CONFIG(shortcut)
-        self.actionRedo.setShortcut(
+        self.action_redo.setShortcut(
             QCoreApplication.translate("MainWindow", u"Ctrl+Y", None)
         )
         # endif // QT_CONFIG(shortcut)
-        self.actionImportVol.setText(
+        self.action_import_vol.setText(
             QCoreApplication.translate("MainWindow", u"Heyex Raw (.vol)", None)
         )
-        self.actionSaveAnnotations.setText(
+        self.action_save_annotations.setText(
             QCoreApplication.translate("MainWindow", u"Save", None)
         )
-        self.actionImportBSFolder.setText(
+        self.action_import_bsfolder.setText(
             QCoreApplication.translate("MainWindow", u"B-Scans from folder", None)
         )
-        self.actionLayerAnnotationGuide.setText(
+        self.action_layer_annotation_guide.setText(
             QCoreApplication.translate("MainWindow", u"Layer Annotation Guide", None)
         )
-        self.actionAreaAnnotationGuide.setText(
+        self.action_area_annotation_guide.setText(
             QCoreApplication.translate("MainWindow", u"Area Annotation Guide", None)
         )
-        self.actionRegistrationGuide.setText(
+        self.action_registration_guide.setText(
             QCoreApplication.translate("MainWindow", u"Registration Guide", None)
         )
-        self.actionShortcutSheet.setText(
+        self.action_shortcut_sheet.setText(
             QCoreApplication.translate("MainWindow", u"Shortcut Sheet", None)
         )
-        self.actionIntroduction.setText(
+        self.action_introduction.setText(
             QCoreApplication.translate("MainWindow", u"Introduction", None)
         )
-        self.actionImportRETOUCH.setText(
+        self.action_import_retouch.setText(
             QCoreApplication.translate("MainWindow", u"RETOUCH", None)
         )
-        self.actionImportDuke.setText(
+        self.action_import_duke.setText(
             QCoreApplication.translate("MainWindow", u"Duke (Farsiu 2014)", None)
         )
-        self.actionImportHEXML.setText(
+        self.action_import_hexml.setText(
             QCoreApplication.translate("MainWindow", u"Heyex XML (.xml)", None)
         )
-        self.actionLoadAnnotations.setText(
+        self.action_load_annotations.setText(
             QCoreApplication.translate("MainWindow", u"Load", None)
         )
-        self.actionSaveAnnotationsAs.setText(
+        self.action_save_annotations_as.setText(
             QCoreApplication.translate("MainWindow", u"Save As", None)
         )
-        self.actionOpen.setText(QCoreApplication.translate("MainWindow", u"Open", None))
-        self.actionSave.setText(QCoreApplication.translate("MainWindow", u"Save", None))
-        self.actionSave_As.setText(
-            QCoreApplication.translate("MainWindow", u"Save As", None)
+        self.action_open.setText(
+            QCoreApplication.translate("MainWindow", u"&Open", None)
         )
-        self.menuFile.setTitle(QCoreApplication.translate("MainWindow", u"File", None))
+        # if QT_CONFIG(shortcut)
+        self.action_open.setShortcut(
+            QCoreApplication.translate("MainWindow", u"Ctrl+O", None)
+        )
+        # endif // QT_CONFIG(shortcut)
+        self.action_save.setText(
+            QCoreApplication.translate("MainWindow", u"&Save", None)
+        )
+        # if QT_CONFIG(shortcut)
+        self.action_save.setShortcut(
+            QCoreApplication.translate("MainWindow", u"Ctrl+S", None)
+        )
+        # endif // QT_CONFIG(shortcut)
+        self.action_save_as.setText(
+            QCoreApplication.translate("MainWindow", u"Save &As", None)
+        )
+        # if QT_CONFIG(shortcut)
+        self.action_save_as.setShortcut(
+            QCoreApplication.translate("MainWindow", u"Ctrl+A", None)
+        )
+        # endif // QT_CONFIG(shortcut)
+        self.menuFile.setTitle(QCoreApplication.translate("MainWindow", u"&File", None))
         self.menuUpload.setTitle(
             QCoreApplication.translate("MainWindow", u"Import", None)
         )
         self.menuAnnotations.setTitle(
             QCoreApplication.translate("MainWindow", u"Annotations", None)
         )
-        self.menuEdit.setTitle("")
+        self.menuEdit.setTitle(QCoreApplication.translate("MainWindow", u"&Edit", None))
         self.menuHelp.setTitle(QCoreApplication.translate("MainWindow", u"Help", None))
 
     # retranslateUi
