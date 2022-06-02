@@ -5,7 +5,7 @@ import eyepy as ep
 import numpy as np
 from eyepy.core.utils import DynamicDefaultDict
 from PySide6 import QtCore, QtWidgets
-from PySide6.QtCore import QAbstractItemModel
+from PySide6.QtCore import QAbstractItemModel, Qt
 
 from eyelab.dialogs import AddAnnotationDialog
 from eyelab.models.scene import CustomGraphicsScene
@@ -286,7 +286,6 @@ class VolumeTreeItemModel(TreeItemModel):
                 current_tool.paint_preview.setParentItem(self.scene.mouseGrabberItem())
 
     def sync_annotations_to_tab(self):
-        self.annotations.sync_with_volume()
         self.annotations.update()
 
     @property
@@ -300,7 +299,8 @@ class VolumeTreeItemModel(TreeItemModel):
     @current_slice.setter
     def current_slice(self, value: int):
         self._current_slice = value
-        self.annotations.sync_with_volume()
+        # self.annotations.sync_with_volume()
+        self.annotations.update()
 
     def _init_model(self):
         self.tree_root = TreeItemGroup(parent=None, meta={"name": "root"})
@@ -453,7 +453,7 @@ class EnfaceTreeItemModel(TreeItemModel):
         self.scene.addItem(self.annotations)
 
     def sync_annotations_to_tab(self):
-        self.annotations.sync_with_volume()
+        # self.annotations.sync_with_volume()
         self.annotations.update()
 
     def _init_model(self):

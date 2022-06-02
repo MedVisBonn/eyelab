@@ -42,6 +42,10 @@ class ViewTab(QWidget, Ui_SceneTab):
         self.current_tool = None
         self.setTools(self.basic_tools)
 
+    # @property
+    # def workspace(self):
+    #    return self.parent()
+
     def set_model(self, model: TreeItemModel):
         self.model = model
         self.addButton.clicked.connect(self._add_annotation)
@@ -161,8 +165,6 @@ class ViewTab(QWidget, Ui_SceneTab):
         # Change activated item
         self.model.activate(current)
         self.model.deactivate(previous)
-        # previous.ungrabMouse()
-        # current.grabMouse()
 
         # Set tools for current item
         if current_tree_item.parent.data("name") == "Layers":

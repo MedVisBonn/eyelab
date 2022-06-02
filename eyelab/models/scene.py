@@ -3,7 +3,8 @@ from collections import namedtuple
 
 import eyepy as ep
 from PySide6 import QtCore, QtGui, QtWidgets
-from PySide6.QtCore import QRectF
+from PySide6.QtCore import QRectF, Qt
+from PySide6.QtWidgets import QGraphicsSceneContextMenuEvent
 
 from eyelab.models.utils import array2qgraphicspixmapitem
 
@@ -29,7 +30,6 @@ class CustomGraphicsScene(QtWidgets.QGraphicsScene):
 
         self.set_image()
 
-        self.grabber_cache = None
         self.setItemIndexMethod(QtWidgets.QGraphicsScene.NoIndex)
 
         logger.debug("CustomGraphicsScene: __init__ done")
@@ -62,29 +62,30 @@ class CustomGraphicsScene(QtWidgets.QGraphicsScene):
 
     def mouseMoveEvent(self, event):
         self.fake_cursor.hide()
+        # item = self.activePanel()
+        # item.mouseMoveEvent(event)
         super().mouseMoveEvent(event)
 
     def mousePressEvent(self, event: "QGraphicsSceneMouseEvent") -> None:
         # Do not handle the event in ScrollHandDrag Mode to not interfere
         if self.views()[0].dragMode() == QtWidgets.QGraphicsView.ScrollHandDrag:
             return
-
+        if event.button() == Qt.RightButton:
+            self.activePanel().setFocus(Qt.OtherFocusReason)
+            self.clearSelection()
         super().mousePressEvent(event)
-        if not event.isAccepted():
-            self.grabber_cache = self.mouseGrabberItem()
-            if not self.grabber_cache is None:
-                self.grabber_cache.ungrabMouse()
-            super().mousePressEvent(event)
 
     def mouseReleaseEvent(self, event: "QGraphicsSceneMouseEvent") -> None:
         if self.views()[0].dragMode() == QtWidgets.QGraphicsView.ScrollHandDrag:
             return
-
         super().mouseReleaseEvent(event)
-        if not self.grabber_cache is None:
-            self.grabber_cache.grabMouse()
 
     def mouseDoubleClickEvent(self, event: QtGui.QMouseEvent) -> None:
-        view = self.views()[0]
-        view.tool.mouse_doubleclick_handler(view.view_tab.current_item, event)
-        event.accept()
+        item = self.activePanel()
+        item.mouseDoubleClickEvent(event)
+        super().mouseDoubleClickEvent(event)
+
+    def contextMenuEvent(self, event: QGraphicsSceneContextMenuEvent) -> None:
+        # item = self.activePanel()
+        # item.contextMenuEvent(event)
+        super().contextMenuEvent(event)

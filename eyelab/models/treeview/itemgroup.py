@@ -11,13 +11,14 @@ class ItemGroup(QtWidgets.QGraphicsItem):
         self.meta = meta
         self.setFlag(QtWidgets.QGraphicsItem.ItemHasNoContents, True)
 
-    def sync_with_volume(self):
+    def update(self):
         if self.meta:
             self.setVisible(self.meta["visible"])
             self.setZValue(self.meta["z_value"])
 
         for item in self.childItems():
-            item.sync_with_volume()
+            item.update()
+        super().update
 
     def boundingRect(self) -> QtCore.QRectF:
         return self.childrenBoundingRect()

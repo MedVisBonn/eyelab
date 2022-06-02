@@ -48,7 +48,7 @@ class TreeItemDelegate(QtWidgets.QStyledItemDelegate):
         model: QtCore.QAbstractItemModel,
         index: QtCore.QModelIndex,
     ) -> None:
-        data = {"visible": editor.visible, "name": editor.labelEdit.text()}
+        data = {"visible": editor.visible, "name": editor.label.text()}
         if type(editor) is LayerEntry:
             data["current_color"] = editor.color
 

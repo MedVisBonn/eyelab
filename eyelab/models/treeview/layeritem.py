@@ -1,169 +1,91 @@
 import logging
-from typing import Any, Dict, List, Optional
+from itertools import groupby
+from typing import Any, Dict, List, Tuple
 
 import eyepy as ep
 import numpy as np
-from PySide6 import QtCore, QtGui, QtWidgets
+from PySide6.QtCore import QLineF, QPoint, QPointF, QRectF, Qt
+from PySide6.QtGui import (
+    QAction,
+    QColor,
+    QFocusEvent,
+    QKeyEvent,
+    QPainterPath,
+    QPen,
+    QPolygonF,
+)
+from PySide6.QtWidgets import (
+    QApplication,
+    QGraphicsEllipseItem,
+    QGraphicsItem,
+    QGraphicsLineItem,
+    QGraphicsPathItem,
+    QGraphicsRectItem,
+    QGraphicsSceneContextMenuEvent,
+    QGraphicsSceneHoverEvent,
+    QGraphicsSceneMouseEvent,
+    QMenu,
+)
 from scipy.interpolate import interp1d
 
+from eyelab.commands import get_undo_stack
+from eyelab.commands import layeritem as layer_commands
+from eyelab.commands.layeritem import (
+    DeleteCurve,
+    DeletePolygon,
+    MoveControlKnot,
+    MoveKnot,
+)
 from eyelab.models.treeview.itemgroup import ItemGroup
 
 logger = logging.getLogger(__name__)
 
 
-class ControllPointGraphicsItem(QtWidgets.QGraphicsRectItem):
+class ControllPointGraphicsItem(QGraphicsRectItem):
     def __init__(self, parent, pos, **kwargs):
         super().__init__(parent=parent, **kwargs)
+        self.setFlag(QGraphicsItem.ItemIgnoresTransformations, True)
+        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges, True)
+        self.setFlag(QGraphicsItem.ItemIsMovable, True)
+        self.setFlag(QGraphicsItem.ItemSendsScenePositionChanges)
 
-        self.setRect(QtCore.QRectF(QtCore.QPoint(-4, -4), QtCore.QPoint(4, 4)))
-        self.setFlag(QtWidgets.QGraphicsItem.ItemIgnoresTransformations, True)
-        self.setFlag(QtWidgets.QGraphicsItem.ItemSendsGeometryChanges, True)
+        self.setRect(QRectF(QPoint(-4, -4), QPoint(4, 4)))
         self.setPos(pos)
 
-        pen = QtGui.QPen(QtGui.QColor("blue"))
+        pen = QPen(QColor("blue"))
         pen.setCosmetic(True)
         self.setPen(pen)
-        self.setFlag(QtWidgets.QGraphicsItem.ItemIsMovable, True)
 
     @property
     def center(self):
-        return self.mapToScene(QtCore.QPointF(0, 0))
+        return self.mapToScene(QPointF(0, 0))
 
     def as_tuple(self):
         center = self.center
         return np.round(center.x(), 2), np.round(center.y(), 2)
 
     def mouseMoveEvent(self, event: "QGraphicsSceneMouseEvent") -> None:
+        command = MoveControlKnot(self, self.mapToParent(event.pos()))
+        get_undo_stack("main").push(command)
         super().mouseMoveEvent(event)
 
-        # Make sure control points move together to keep the curve smooth
-        if self is self.parentItem().cp_in:
-            line = QtCore.QLineF(self.center, self.parentItem().center)
-            line2 = QtCore.QLineF(
-                self.parentItem().center, self.parentItem().cp_out.center
-            )
-            line.setLength(line.length() + line2.length())
-            self.parentItem().cp_out = line.p2()
-        elif self is self.parentItem().cp_out:
-            line = QtCore.QLineF(self.center, self.parentItem().center)
-            line2 = QtCore.QLineF(
-                self.parentItem().center, self.parentItem().cp_in.center
-            )
-            line.setLength(line.length() + line2.length())
-            self.parentItem().cp_in = line.p2()
-
-        self.parentItem().parentItem().parentItem().update_line()
-        self.parentItem().set_lines()
-
-    def itemChange(
-        self, change: QtWidgets.QGraphicsItem.GraphicsItemChange, value: Any
-    ) -> Any:
-        if change == QtWidgets.QGraphicsItem.ItemPositionChange:
+    def itemChange(self, change: QGraphicsItem.GraphicsItemChange, value: Any) -> Any:
+        if (
+            change == QGraphicsItem.ItemPositionChange
+            or change == QGraphicsItem.ItemScenePositionHasChanged
+        ):
             self.parentItem().set_line_of(self)
+
+            if self is self.parentItem().cp_in:
+                self.parentItem().knot_dict["cp_in_pos"] = self.as_tuple()
+            elif self is self.parentItem().cp_out:
+                self.parentItem().knot_dict["cp_out_pos"] = self.as_tuple()
             return value
 
-        if change == QtWidgets.QGraphicsItem.ItemPositionHasChanged:
-            self.parentItem().sync()
-
         return value
 
-    def mouseReleaseEvent(self, event: "QGraphicsSceneMouseEvent") -> None:
-        super().mouseReleaseEvent(event)
 
-
-class KnotGraphicsItem(QtWidgets.QGraphicsEllipseItem):
-    def __init__(self, parent, pos, **kwargs):
-        super().__init__(parent=parent, **kwargs)
-        self.setFlag(QtWidgets.QGraphicsItem.ItemIgnoresTransformations, True)
-        self.setFlag(QtWidgets.QGraphicsItem.ItemIsMovable, True)
-        self.setFlag(QtWidgets.QGraphicsItem.ItemSendsGeometryChanges, True)
-        self.setFlag(QtWidgets.QGraphicsItem.ItemSendsScenePositionChanges, True)
-        self.setFlag(QtWidgets.QGraphicsItem.ItemIsFocusable, True)
-
-        self.setRect(QtCore.QRectF(QtCore.QPoint(-5, -5), QtCore.QPoint(5, 5)))
-        self.setPos(pos)
-
-        pen = QtGui.QPen(QtGui.QColor("red"))
-        pen.setCosmetic(True)
-        self.setPen(pen)
-
-    def itemChange(
-        self, change: QtWidgets.QGraphicsItem.GraphicsItemChange, value: Any
-    ) -> Any:
-        if change == QtWidgets.QGraphicsItem.ItemScenePositionHasChanged:
-            self.stay_in_scene()
-        if change == QtWidgets.QGraphicsItem.ItemPositionHasChanged:
-            self.parentItem().parentItem().parentItem().update_line()
-            self.parentItem().sync()
-
-        return value
-
-    def paint(
-        self,
-        painter: QtGui.QPainter,
-        option: "QStyleOptionGraphicsItem",
-        widget: Optional[QtWidgets.QWidget] = ...,
-    ) -> None:
-        super().paint(painter, option, widget)
-
-    @property
-    def center(self) -> QtCore.QPointF:
-        return self.mapToScene(QtCore.QPointF(0, 0))
-
-    def as_tuple(self):
-        center = self.center
-        return np.round(center.x(), 2), np.round(center.y(), 2)
-
-    def mousePressEvent(self, event: "QGraphicsSceneMouseEvent") -> None:
-        if event.buttons() & QtCore.Qt.RightButton:
-            line_item = self.parentItem().parentItem()
-            self.parentItem().parentItem().delete_knot(self.parentItem())
-            event.accept()
-        else:
-            self.parentItem().mousePressEvent(event)
-
-    def keyPressEvent(self, event: QtGui.QKeyEvent) -> None:
-        modifiers = QtWidgets.QApplication.keyboardModifiers()
-        if modifiers == QtCore.Qt.ControlModifier:
-            event.ignore()
-            return
-        if event.key() == QtCore.Qt.Key_Delete:
-            self.parentItem().parentItem().delete_knot(self.parentItem())
-
-    def mouseReleaseEvent(self, event: "QGraphicsSceneMouseEvent") -> None:
-        self.parentItem().mouseReleaseEvent(event)
-
-    def stay_in_scene(self):
-        pos = self.center
-        if pos.x() < 0:
-            pos.setX(0)
-        if pos.x() > self.scene().shape[1]:
-            pos.setX(self.scene().shape[1])
-        if pos.y() < 0:
-            pos.setY(0)
-        if pos.y() > self.scene().shape[0]:
-            pos.setY(self.scene().shape[0])
-        self.setPos(self.mapToParent(self.mapFromScene(pos)))
-
-    def mouseMoveEvent(self, event: "QGraphicsSceneMouseEvent") -> None:
-        self.parentItem().mouseMoveEvent(event)
-
-    def focusInEvent(self, event: QtGui.QFocusEvent) -> None:
-        super().focusInEvent(event)
-        pen = QtGui.QPen(QtGui.QColor("yellow"))
-        pen.setCosmetic(True)
-        self.setPen(pen)
-        self.update()
-
-    def focusOutEvent(self, event: QtGui.QFocusEvent) -> None:
-        super().focusOutEvent(event)
-        pen = QtGui.QPen(QtGui.QColor("red"))
-        pen.setCosmetic(True)
-        self.setPen(pen)
-        self.update()
-
-
-class CubicSplineKnotItem(QtWidgets.QGraphicsItem):
+class CubicSplineKnotItem(QGraphicsEllipseItem):
     def __init__(
         self,
         parent,
@@ -172,57 +94,78 @@ class CubicSplineKnotItem(QtWidgets.QGraphicsItem):
     ):
         """"""
         super().__init__(parent=parent, **kwargs)
+        self.setFlag(QGraphicsItem.ItemIsMovable, True)
+        self.setFlag(QGraphicsItem.ItemIsFocusable, True)
+        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
+        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges, True)
+        self.setFlag(QGraphicsItem.ItemIgnoresTransformations, True)
+
         self.knot_dict = knot_dict
         # Create knot
-        self._knot = None
         self._cp_in = None
         self._cp_out = None
-        self._knot = KnotGraphicsItem(self, self.mapFromScene(self.knot_pos))
+
+        self.setRect(QRectF(QPoint(-5, -5), QPoint(5, 5)))
+        self.setPos(self.mapFromScene(self.knot_pos))
+        pen = QPen(QColor("red"))
+        pen.setCosmetic(True)
+        self.setPen(pen)
+
         # Create control points
-        pen = QtGui.QPen(QtGui.QColor("blue"))
+        pen = QPen(QColor("blue"))
         pen.setCosmetic(True)
         self.cps_visible = True
 
-        self._cp_in = ControllPointGraphicsItem(self, self.cp_in_pos)
-        self._line_in = QtWidgets.QGraphicsLineItem(
-            QtCore.QLineF(
-                self.mapFromScene(self.knot.center),
+        self._cp_in = ControllPointGraphicsItem(self, self.mapFromScene(self.cp_in_pos))
+        self._line_in = QGraphicsLineItem(
+            QLineF(
+                self.mapFromScene(self.center),
                 self.mapFromScene(self.cp_in.center),
             ),
             parent=self,
         )
         self._line_in.setPen(pen)
 
-        self._cp_out = ControllPointGraphicsItem(self, self.cp_out_pos)
-        self._line_out = QtWidgets.QGraphicsLineItem(
-            QtCore.QLineF(
-                self.mapFromScene(self.knot.center),
+        self._cp_out = ControllPointGraphicsItem(
+            self, self.mapFromScene(self.cp_out_pos)
+        )
+        self._line_out = QGraphicsLineItem(
+            QLineF(
+                self.mapFromScene(self.center),
                 self.mapFromScene(self.cp_out.center),
             ),
             parent=self,
         )
         self._line_out.setPen(pen)
 
-        self.setFlag(QtWidgets.QGraphicsItem.ItemHasNoContents, True)
-        self.setFlag(QtWidgets.QGraphicsItem.ItemIsMovable, True)
-        self.setFlag(QtWidgets.QGraphicsItem.ItemSendsGeometryChanges, True)
+    def itemChange(self, change: QGraphicsItem.GraphicsItemChange, value: Any) -> Any:
+        if change == QGraphicsItem.ItemPositionChange and self.scene():
+            newPos = QPointF(value)
+            rect = self.scene().sceneRect()
 
-    def itemChange(
-        self, change: QtWidgets.QGraphicsItem.GraphicsItemChange, value: Any
-    ) -> Any:
-        if change == QtWidgets.QGraphicsItem.ItemPositionChange:
-            # self.knot.stay_in_scene()
-            self.parentItem().optimize_controllpoints(self)
-            self.parentItem().parentItem().update_line()
+            if not rect.contains(newPos):
+                # Keep the item inside the scene rect.
+                newPos.setX(min(rect.right(), max(newPos.x(), rect.left())))
+                newPos.setY(min(rect.bottom(), max(newPos.y(), rect.top())))
 
-        if change == QtWidgets.QGraphicsItem.ItemPositionHasChanged:
-            # Todo write to eyevolumelayerannotation
-            pass
+            self.knot_dict["knot_pos"] = self.as_tuple()
+            return newPos
         return value
 
+    @property
+    def bspline(self) -> "CubicSpline":
+        return self.parentItem()
+
+    @property
+    def layer_item(self) -> "LayerItem":
+        return self.parentItem().layer_item
+
+    def as_tuple(self):
+        center = self.center
+        return np.round(center.x(), 2), np.round(center.y(), 2)
+
     def sync(self):
-        if self.knot:
-            self.knot_pos = self.knot.as_tuple()
+        self.knot_pos = self.as_tuple()
         if self.cp_in:
             self.cp_in_pos = self.cp_in.as_tuple()
         if self.cp_out:
@@ -230,7 +173,7 @@ class CubicSplineKnotItem(QtWidgets.QGraphicsItem):
 
     @property
     def knot_pos(self):
-        return QtCore.QPointF(*self.knot_dict["knot_pos"])
+        return QPointF(*self.knot_dict["knot_pos"])
 
     @knot_pos.setter
     def knot_pos(self, value: tuple):
@@ -238,7 +181,7 @@ class CubicSplineKnotItem(QtWidgets.QGraphicsItem):
 
     @property
     def cp_in_pos(self):
-        return QtCore.QPointF(*self.knot_dict["cp_in_pos"])
+        return QPointF(*self.knot_dict["cp_in_pos"])
 
     @cp_in_pos.setter
     def cp_in_pos(self, value: tuple):
@@ -246,32 +189,25 @@ class CubicSplineKnotItem(QtWidgets.QGraphicsItem):
 
     @property
     def cp_out_pos(self):
-        return QtCore.QPointF(*self.knot_dict["cp_out_pos"])
+        return QPointF(*self.knot_dict["cp_out_pos"])
 
     @cp_out_pos.setter
     def cp_out_pos(self, value: tuple):
         self.knot_dict["cp_out_pos"] = value
 
     def set_cp_out_length(self, length):
-        line = QtCore.QLineF(self.center, self.cp_out.center)
+        line = QLineF(self.center, self.cp_out.center)
         line.setLength(length)
         self.cp_out = line.p2()
 
     def set_cp_in_length(self, length):
-        line = QtCore.QLineF(self.center, self.cp_in.center)
+        line = QLineF(self.center, self.cp_in.center)
         line.setLength(length)
         self.cp_in = line.p2()
 
-    def boundingRect(self) -> QtCore.QRectF:
-        return self.childrenBoundingRect()
-
-    def shape(self) -> QtGui.QPainterPath:
-        path = QtGui.QPainterPath()
-        return path
-
     @property
-    def center(self) -> QtCore.QPointF:
-        return self.knot.center
+    def center(self) -> QPointF:
+        return self.mapToScene(QPointF(0, 0))
 
     def hide_control_points(self):
         self.cps_visible = False
@@ -286,10 +222,6 @@ class CubicSplineKnotItem(QtWidgets.QGraphicsItem):
         self._cp_out.show()
         self._line_in.show()
         self._line_out.show()
-
-    @property
-    def knot(self) -> KnotGraphicsItem:
-        return self._knot
 
     @property
     def cp_in(self) -> ControllPointGraphicsItem:
@@ -324,46 +256,124 @@ class CubicSplineKnotItem(QtWidgets.QGraphicsItem):
 
     def _set_line_in(self):
         self._line_in.setLine(
-            QtCore.QLineF(
-                self.mapFromScene(self.center), self.mapFromScene(self.cp_in.center)
-            )
+            QLineF(self.mapFromScene(self.center), self.mapFromScene(self.cp_in.center))
         )
 
     def _set_line_out(self):
         self._line_out.setLine(
-            QtCore.QLineF(
+            QLineF(
                 self.mapFromScene(self.center), self.mapFromScene(self.cp_out.center)
             )
         )
 
+    def focusInEvent(self, event: QFocusEvent) -> None:
+        pen = self.pen()
+        pen.setStyle(Qt.DotLine)
+        self.setPen(pen)
+        super().focusInEvent(event)
 
-class CubicSpline(QtWidgets.QGraphicsPathItem):
+    def focusOutEvent(self, event: QFocusEvent) -> None:
+        pen = self.pen()
+        pen.setStyle(Qt.SolidLine)
+        self.setPen(pen)
+        super().focusOutEvent(event)
+
+    def mousePressEvent(self, event: QGraphicsSceneMouseEvent) -> None:
+        if event.buttons() & Qt.RightButton:
+            command = layer_commands.DeleteKnot(self)
+            get_undo_stack("main").push(command)
+            event.accept()
+            return
+        super().mousePressEvent(event)
+
+    def mouseMoveEvent(self, event: QGraphicsSceneMouseEvent) -> None:
+        index = self.bspline.knots.index(self)
+        left_knot = self.bspline.knots[index - 1].center.x() if index > 0 else 0
+        right_knot = (
+            self.bspline.knots[index + 1].center.x()
+            if index + 1 < len(self.bspline.knots)
+            else self.scene().shape[1]
+        )
+
+        index = self.layer_item.cubic_splines.index(self.bspline)
+        if index > 0 and left_knot == 0:
+            left_knot = self.layer_item.cubic_splines[index - 1].knots[-1].center.x()
+        if (
+            index + 1 < len(self.layer_item.cubic_splines)
+            and right_knot == self.scene().shape[1]
+        ):
+            right_knot = self.layer_item.cubic_splines[index + 1].knots[0].center.x()
+
+        if left_knot < event.scenePos().x() < right_knot:
+            command = MoveKnot(self, event.scenePos())
+            get_undo_stack("main").push(command)
+        event.accept()
+        # super().mouseMoveEvent(event)
+
+    def keyPressEvent(self, event: QKeyEvent) -> None:
+        # modifiers = QApplication.keyboardModifiers()
+        if event.key() == Qt.Key_Delete:
+            spline = self.parentItem()
+            knot = self
+            command = layer_commands.DeleteKnot(knot)
+            get_undo_stack("main").push(command)
+            event.accept()
+            return
+        super().keyPressEvent(event)
+
+
+class CubicSpline(QGraphicsPathItem):
     def __init__(self, knots: List[dict], parent: "LayerItem"):
         super().__init__(parent=parent)
         self._knots = knots
-        self.control_points_visible = True
+        self.control_points_visible = False
         # Add knots and controll points for every Curve
-        self.knots = sorted(
-            [CubicSplineKnotItem(parent=self, knot_dict=k) for k in self._knots],
-            key=lambda x: x.knot.as_tuple()[0],
-        )
-        self.hide_knots()
-        self.update_spline()
+        self.knots = [
+            CubicSplineKnotItem(parent=self, knot_dict=k) for k in self._knots
+        ]
 
-    def build_path(self) -> QtGui.QPainterPath:
-        knots = sorted(self.knots, key=lambda x: x.center.x())
+        self.hide_control_points()
+        self.hide_knots()
+
+        self.setAcceptHoverEvents(True)
+
+        self.setFlag(QGraphicsItem.ItemIsFocusable)
+        self.setFlag(QGraphicsItem.ItemIsSelectable)
+        self.update()
+
+    @property
+    def start(self) -> QPointF:
+        return self.knots[0].center
+
+    @property
+    def end(self) -> QPointF:
+        return self.knots[-1].center
+
+    @property
+    def x_region(self) -> Tuple[float, float]:
+        if len(self.knots) == 0:
+            return 0.0, 0.0
+        return self.start.x(), self.end.x()
+
+    def __contains__(self, item):
+        if self.start.x() < item.x() < self.end.x():
+            return True
+        return False
+
+    def _build_path(self) -> QPainterPath:
+        knots = self.knots
         if len(knots) == 0:
-            return QtGui.QPainterPath()
-        for i, current_knot in enumerate(knots):
+            return QPainterPath()
+
+        path = QPainterPath(knots[0].center)
+        last_knot = knots[0]
+        if len(knots) == 1:
+            return path
+
+        for i, current_knot in enumerate(knots[1:], 1):
             current = current_knot.center
-            if i == 0:
-                path = QtGui.QPainterPath(current)
-                last_knot = current_knot
-            else:
-                path.cubicTo(
-                    last_knot.cp_out.center, current_knot.cp_in.center, current
-                )
-                last_knot = current_knot
+            path.cubicTo(last_knot.cp_out.center, current_knot.cp_in.center, current)
+            last_knot = current_knot
         return path
 
     def hide_knots(self):
@@ -384,84 +394,64 @@ class CubicSpline(QtWidgets.QGraphicsPathItem):
             knot.show_control_points()
         self.control_points_visible = True
 
-    @property
-    def x_region(self):
-        if len(self.knots) == 0:
-            return (0, 0)
-        return self.knots[0].center.x(), self.knots[-1].center.x()
-
-    @property
     def indices(self):
-        start = np.rint(self.knots[0].center.x()).astype(int)
-        end = np.rint(self.knots[-1].center.toPoint().x()).astype(int)
+        self.update()
+        start = np.floor(self.start.x()).astype(int)
+        end = np.floor(self.end.x()).astype(int)
+        if start == end:
+            return {start: self.start.y()}
 
         n_points = end - start + 1
         x_indices = []
         y_indices = []
-        for t in np.arange(n_points):
-            point = self.path().pointAtPercent(t / n_points)
-            if len(x_indices) == 0 or point.x() > x_indices[-1]:
-                x_indices.append(point.x())
-                y_indices.append(point.y())
+        for t in np.linspace(0, 1, n_points * 2):
+            point = self.path().pointAtPercent(t)
+            x_indices.append(point.x())
+            y_indices.append(point.y())
 
-        x_indices = np.array(x_indices)
+        x_indices = np.round(np.array(x_indices), 5)
         y_indices = np.array(y_indices)
 
-        if n_points > 1:
-            f = interp1d(
-                x_indices, y_indices, assume_sorted=True, copy=False, bounds_error=True
-            )
-            x = np.arange(start + 1, end - 1, dtype=int)
-            # Get height for the middle of each pixel
-            y = f(x + 0.5)
+        f = interp1d(
+            x_indices, y_indices, assume_sorted=True, copy=False, bounds_error=True
+        )
+        x = np.arange(start, end + 1, dtype=int)
+        # Get height for the middle of each pixel
+        y = f(x + 0.5)
+
+        return {xi: yi for xi, yi in zip(x, y)}
+
+    def update(self):
+        self.setPath(self._build_path())
+        super().update()
+
+    def add_knot(self, knot: CubicSplineKnotItem) -> None:
+        knot.setParentItem(self)
+        if len(self._knots) > 0:
+            # Get insertion index
+            i = 0
+            for k in self._knots:
+                if knot.center.x() > k["knot_pos"][0]:
+                    i += 1
+                    continue
+                break
+            self._knots.insert(i, knot.knot_dict)
+            self.knots.insert(i, knot)
         else:
-            x, y = np.floor(x_indices).astype(int), y_indices
+            self._knots.append(knot.knot_dict)
+            self.knots.append(knot)
 
-        return x, y
-
-    def update_spline(self):
-        self.setPath(self.build_path())
-        self.update()
-
-    def add_knot(self, pos):
-        # if first knot, just add knot on the current path
-        knot_dict = {
-            "knot_pos": (pos.x(), pos.y()),
-            "cp_in_pos": (pos.x() - 1, pos.y()),
-            "cp_out_pos": (pos.x() + 1, pos.y()),
-        }
-        self._knots.append(knot_dict)
-        new_knot = CubicSplineKnotItem(self, knot_dict)
-        self.knots.append(new_knot)
-        self.optimize_controllpoints(new_knot)
         if not self.control_points_visible:
-            new_knot.hide_control_points()
-        self.update_spline()
+            knot.hide_control_points()
 
-    def delete_knot(self, knot):
-        index = self.knots.index(knot)
-        knot.prepareGeometryChange()
-        self.scene().removeItem(knot)
-        self.knots.remove(knot)
-        # Optimize knots before and after the deleted knot
-        if index > 0:
-            last_knot = self.knots[index - 1]
-            self.optimize_controllpoints(last_knot, propagate=False)
-        if index < len(self.knots):
-            next_knot = self.knots[index]
-            self.optimize_controllpoints(next_knot, propagate=False)
-
-        self.update_spline()
-
-    def shape(self) -> QtGui.QPainterPath:
+    def shape(self) -> QPainterPath:
         # Create a path which closes without increasing its "area"
         # Only clicking exactly the line should activate this item
         path = self.path()
         path.connectPath(self.path().toReversed())
         return path
 
-    def optimize_controllpoints(self, knot, distance_factor=0.25, propagate=True):
-        self.knots = sorted(self.knots, key=lambda x: x.center.x())
+    def optimize_controllpoints(self, knot, distance_factor=0.35):
         knots = self.knots
         index = knots.index(knot)
 
@@ -473,38 +463,31 @@ class CubicSpline(QtWidgets.QGraphicsPathItem):
         # meta = self.annotation_data.meta
         optimize_strength = True  # meta["spline:optimize_strength"]
         optimize_angle = True  # meta["spline:optimize_angle"]
-        optimize_neighbours = True  # meta["spline:optimize_neighbours"]
-
-        if propagate and optimize_neighbours:
-            if index - 1 >= 0:
-                self.optimize_controllpoints(knots[index - 1], propagate=False)
-            if index + 1 <= len(knots) - 1:
-                self.optimize_controllpoints(knots[index + 1], propagate=False)
 
         if len(knots) == 1:
             pos = knot.center
-            source = QtCore.QLineF(QtCore.QPointF(pos.x() - 1, pos.y()), pos)
-            target = QtCore.QLineF(pos, QtCore.QPointF(pos.x() + 1, pos.y()))
+            source = QLineF(QPointF(pos.x() - 10, pos.y()), pos)
+            target = QLineF(pos, QPointF(pos.x() + 10, pos.y()))
 
         elif index == 0:
-            target = QtCore.QLineF(knot.center, knots[1].knot.center)
+            target = QLineF(knot.center, knots[1].center)
             source = (
-                QtCore.QLineF()
+                QLineF()
                 .fromPolar(target.length(), 180 + target.angle())
                 .translated(knot.center)
             )
             source.setPoints(source.p2(), source.p1())
 
         elif index == len(knots) - 1:
-            source = QtCore.QLineF(knots[-2].knot.center, knot.center)
+            source = QLineF(knots[-2].center, knot.center)
             target = (
-                QtCore.QLineF()
+                QLineF()
                 .fromPolar(source.length(), source.angle())
                 .translated(knot.center)
             )
         else:
-            source = QtCore.QLineF(knots[index - 1].knot.center, knot.center)
-            target = QtCore.QLineF(knot.center, knots[index + 1].knot.center)
+            source = QLineF(knots[index - 1].center, knot.center)
+            target = QLineF(knot.center, knots[index + 1].center)
 
         targetAngle = target.angleTo(source)
         if targetAngle > 180:
@@ -513,8 +496,8 @@ class CubicSpline(QtWidgets.QGraphicsPathItem):
             angle = (target.angle() + target.angleTo(source) / 2) % 360
 
         if optimize_strength:
-            length_in = source.length() * distance_factor
-            length_out = target.length() * distance_factor
+            length_in = source.dx() * distance_factor
+            length_out = target.dx() * distance_factor
         else:
             length_in = knot._line_in.line().length()
             length_out = knot._line_out.line().length()
@@ -526,109 +509,273 @@ class CubicSpline(QtWidgets.QGraphicsPathItem):
             angle_in = (knot._line_in.line().angle()) % 360
             angle_out = knot._line_out.line().angle()
 
-        revTarget = QtCore.QLineF.fromPolar(length_in, angle_in).translated(knot.center)
-        knot.cp_in = revTarget.p2()
+        revTarget = QLineF.fromPolar(length_in, angle_in).translated(knot.center)
+        cp_in = revTarget.p2()
 
-        revSource = QtCore.QLineF.fromPolar(length_out, angle_out).translated(
-            knot.center
-        )
-        knot.cp_out = revSource.p2()
+        revSource = QLineF.fromPolar(length_out, angle_out).translated(knot.center)
+        cp_out = revSource.p2()
+        return cp_in, cp_out
+
+    @property
+    def layer_item(self) -> "LayerItem":
+        return self.parentItem()
+
+    def hoverEnterEvent(self, event: QGraphicsSceneHoverEvent) -> None:
+        pen = self.pen()
+        pen.setWidth(pen.width() + 3)
+        self.setPen(pen)
+        super().hoverEnterEvent(event)
+
+    def hoverLeaveEvent(self, event: QGraphicsSceneHoverEvent) -> None:
+        pen = self.pen()
+        pen.setWidth(pen.width() - 3)
+        self.setPen(pen)
+        super().hoverLeaveEvent(event)
+
+    def mousePressEvent(self, event: QGraphicsSceneMouseEvent) -> None:
+        super().mousePressEvent(event)
+
+    def focusInEvent(self, event: QFocusEvent) -> None:
+        pen = self.pen()
+        pen.setStyle(Qt.DotLine)
+        self.setPen(pen)
+        super().focusInEvent(event)
+
+    def focusOutEvent(self, event: QFocusEvent) -> None:
+        pen = self.pen()
+        pen.setStyle(Qt.SolidLine)
+        self.setPen(pen)
+        super().focusOutEvent(event)
+
+    def keyPressEvent(self, event: QKeyEvent) -> None:
+        if event.key() == Qt.Key_Delete:
+            command = DeleteCurve(self)
+            get_undo_stack("main").push(command)
+            event.accept()
+            return
+        super().keyPressEvent(event)
 
 
-class PolygonPath(QtWidgets.QGraphicsPathItem):
-    def __init__(self, heights, parent, start=None, end=None):
+class PolygonPath(QGraphicsPathItem):
+    def __init__(self, parent, heights, start: QPointF = None, end: QPointF = None):
         super().__init__(parent)
         self.heights = heights
-        self.points = self._points_from_heights(heights)
-        self.polygon = QtGui.QPolygonF().fromList(self.points)
-
         self._start = start
-        if start is None and self.points != []:
-            self._start = self.points[0]
-
         self._end = end
-        if end is None and self.points != []:
-            self._end = self.points[-1]
 
-        self._update_polygon()
-
-    def _points_from_heights(self, heights):
-        points = []
-        for (
-            i,
-            h,
-        ) in enumerate(heights):
-            if not np.isnan(h):
-                # +0.5 for points to sit in the middle and not start of each pixel (in x direction)
-                points.append(QtCore.QPointF(i + 0.5, h))
-        return points
-
-    def _update_polygon(self):
-        self.points = self._points_from_heights(self.heights)
-        if self.points == []:
-            self.setPath(QtGui.QPainterPath())
-            self.update()
-            return
-        points = (
-            [self._start]
-            + [p for p in self.points if self._start.x() <= p.x() <= self._end.x()]
-            + [self._end]
-        )
-
-        self.polygon = QtGui.QPolygonF().fromList(points)
-        path = QtGui.QPainterPath()
-        path.addPolygon(self.polygon)
-        self.setPath(path)
+        # self.setAcceptHoverEvents(True)
+        # self.setFlag(QGraphicsItem.ItemIsFocusable)
         self.update()
 
-    def set_start(self, point):
+    def mousePressEvent(self, event: QGraphicsSceneMouseEvent) -> None:
+        # print(self.layer_item.focusItem())
+        super().mousePressEvent(event)
+        # print(self.layer_item.focusItem())
+
+    def shape(self) -> QPainterPath:
+        # Create a path which closes without increasing its "area"
+        # Only clicking exactly the line should activate this item
+        path = self.path()
+        path.connectPath(self.path().toReversed())
+        return path
+
+    @property
+    def layer_item(self) -> "LayerItem":
+        return self.parentItem()
+
+    def _get_points(self):
+        points = []
+        if self._start is None:
+            start_index = 0
+        else:
+            start_index = int(np.floor(self._start.x()))
+            points.append(self._start)
+
+        if self._end is None:
+            end_index = len(self.heights) - 1
+        else:
+            end_index = int(np.ceil(self._end.x()))
+
+        for i in range(start_index, end_index):
+            # +0.5 for points to sit in the middle and not start of each pixel (in x direction)
+            points.append(QPointF(i + 0.5, self.heights[i]))
+
+        if self._end is not None:
+            points.append(self._end)
+        return points
+
+    def update(self):
+        points = self._get_points()
+        if points == []:
+            self.setPath(QPainterPath())
+            super().update()
+            return
+
+        self.polygon = QPolygonF().fromList(points)
+        path = QPainterPath()
+        path.addPolygon(self.polygon)
+        self.setPath(path)
+        super().update()
+
+    @property
+    def start(self) -> QPointF:
+        return self._start
+
+    @start.setter
+    def start(self, point: QPointF) -> None:
         self._start = point
-        self._update_polygon()
+        self.update()
 
-    def set_end(self, point):
+    @property
+    def end(self) -> QPointF:
+        return self._end
+
+    @end.setter
+    def end(self, point: QPointF) -> None:
         self._end = point
-        self._update_polygon()
+        self.update()
+
+    @property
+    def x_region(self) -> Tuple[float, float]:
+        return self.start.x(), self.end.x()
+
+    def __contains__(self, item):
+        if self.start.x() < item.x() < self.end.x():
+            return True
+        return False
+
+    def hoverEnterEvent(self, event: QGraphicsSceneHoverEvent) -> None:
+        pen = self.pen()
+        pen.setWidth(pen.width() + 3)
+        self.setPen(pen)
+        super().hoverEnterEvent(event)
+
+    def hoverLeaveEvent(self, event: QGraphicsSceneHoverEvent) -> None:
+        pen = self.pen()
+        pen.setWidth(pen.width() - 3)
+        self.setPen(pen)
+        super().hoverLeaveEvent(event)
+
+    def focusInEvent(self, event: QFocusEvent) -> None:
+        pen = self.pen()
+        pen.setStyle(Qt.DotLine)
+        self.setPen(pen)
+        super().focusInEvent(event)
+
+    def focusOutEvent(self, event: QFocusEvent) -> None:
+        pen = self.pen()
+        pen.setStyle(Qt.SolidLine)
+        self.setPen(pen)
+        super().focusOutEvent(event)
+
+    def keyPressEvent(self, event: QKeyEvent) -> None:
+        if event.key() == Qt.Key_Delete:
+            command = DeletePolygon(self)
+            get_undo_stack("main").push(command)
+            event.accept()
+            return
+        super().keyPressEvent(event)
 
 
-class LayerItem(QtWidgets.QGraphicsPathItem):
+class LayerItem(QGraphicsPathItem):
     def __init__(
         self, data: ep.EyeVolumeLayerAnnotation, index: int, parent: ItemGroup
     ):
         super().__init__(parent=parent)
         self.annotation_data = data
         self.index = index
-        self.cubic_spline = CubicSpline(self.annotation_data.knots[self.index], self)
-        self.start_polygon = PolygonPath(
-            self.annotation_data.data[-(self.index + 1)], self
+        self.cubic_splines = [CubicSpline(knots, self) for knots in self.knots]
+        self.polygons = self._get_polygons()
+
+        self.setFlag(QGraphicsItem.ItemIsPanel)
+        self.setFlag(QGraphicsItem.ItemIsFocusable)
+        self.setFlag(QGraphicsItem.ItemIsSelectable)
+
+        for cs in self.cubic_splines:
+            left, right = self.get_neighbour_elements(cs)
+            if left:
+                left.end = cs.start
+            if right:
+                right.start = cs.end
+        self.update()
+
+    def get_neighbour_elements(self, layer_element):
+        elements = sorted(self.cubic_splines + self.polygons, key=lambda x: x.start.x())
+        index = elements.index(layer_element)
+        left = elements[index - 1] if index > 0 else None
+        right = elements[index + 1] if index + 1 < len(elements) else None
+        return left, right
+
+    def get_neighbour_polygons(self, layer_element):
+        """Get polygons starting left and right from the given element
+
+        The returned elements are ordered by their distance to the given elements
+
+        :returns (left_neighbours, right_neighbours)
+        """
+        elements = sorted(
+            self.polygons + [layer_element], key=lambda x: (x.start.x(), x.end.x())
         )
-        self.end_polygon = PolygonPath(
-            self.annotation_data.data[-(self.index + 1)], self
-        )
+        index = elements.index(layer_element)
+        return elements[:index][::-1], elements[index + 1 :]
 
-        self.setFlag(QtWidgets.QGraphicsItem.ItemIsPanel)
-        self.sync_with_volume()
-        self.update_line()
+    @property
+    def knots(self):
+        return self.annotation_data.knots[self.index]
 
-    def add_knot(self, pos):
-        self.cubic_spline.add_knot(pos)
-        self.update_line()
+    def _get_polygons(self) -> List[PolygonPath]:
+        """Create polygons from the layer height maps in regions outside the cubic splines
 
-    def delete_knot(self, knot):
-        self.cubic_spline.delete_knot(knot)
-        self.update_line()
+        Polygons cover A-scans that are not part of a Cubic Spline and are connected to the first/last knot
+        of neighbouring Cubic splines.
+        """
+        # Get polygon regions:
+        layer_copy = self.height_map.copy()
+        # Create a polygon for every non spline region
+        for cs in self.cubic_splines:
+            layer_copy[int(np.floor(cs.start.x())) : int(np.ceil(cs.end.x()))] = np.nan
+
+        layer_copy = ~np.isnan(layer_copy)
+        # Collect ranges of polygon regions (python indexing)
+        i = 0
+        polygon_regions = []
+
+        for k, g in groupby(layer_copy):
+            l = len(list(g))
+            if k:
+                polygon_regions.append(
+                    (
+                        QPointF(i + 0.5, self.height_map[i]),
+                        QPointF(i + l - 0.5, self.height_map[i + l - 1]),
+                    )
+                )
+            i += l
+
+        return [self._get_polygon(start, end) for start, end in polygon_regions]
+
+    def _get_polygon(self, start: QPointF, end: QPointF) -> PolygonPath:
+        return PolygonPath(self, self.height_map, start, end)
+
+    @property
+    def height_map(self):
+        return self.annotation_data.data[-(self.index + 1)]
 
     def setActive(self, active: bool) -> None:
         if active:
-            self.cubic_spline.show_knots()
+            for cs in self.cubic_splines:
+                cs.show_knots()
+                # cs.show_control_points()
         else:
-            self.cubic_spline.hide_knots()
+            for cs in self.cubic_splines:
+                cs.hide_knots()
+                # cs.hide_control_points()
         super().setActive(active)
 
     def as_array(self):
         """Return the annotated path as an array of shape (image width)
 
         The array has the same shape as the annotated image width. Regions
-        which are not annoted become np.nan
+        which are not annotated become np.nan
 
         The array is build by painting the annotated path on a pixmap,
         converting it to a numpy array and computing the column-wise center of
@@ -647,79 +794,75 @@ class LayerItem(QtWidgets.QGraphicsPathItem):
 
         return heights
 
-    def update_line(self):
-        # hasattr check for loading of new data. When old data is removed knots might fire an update althoug the cubic_spline is already removed.
-        if hasattr(self, "cubic_spline") and len(self.cubic_spline.knots) != 0:
-            if (
-                self.start_polygon._start is None
-                or self.cubic_spline.knots[0].center.x() < self.start_polygon._start.x()
-            ):
-                self.start_polygon._start = self.cubic_spline.knots[0].center
-            if (
-                self.end_polygon._end is None
-                or self.cubic_spline.knots[-1].center.x() > self.end_polygon._end.x()
-            ):
-                self.end_polygon._end = self.cubic_spline.knots[-1].center
+    def update(self):
+        self.setVisible(self.annotation_data.meta["visible"])
+        self.setZValue(self.annotation_data.meta["z_value"])
 
-            self.cubic_spline.update_spline()
-            x, y = self.cubic_spline.indices
-            self.annotation_data.data[-(self.index + 1), x] = y
+        color = QColor()
+        color.setNamedColor(f"#{self.annotation_data.meta['current_color']}")
 
-            self.start_polygon.set_end(self.cubic_spline.knots[0].center)
-            self.end_polygon.set_start(self.cubic_spline.knots[-1].center)
+        pen = QPen(color)
+        pen.setWidth(2)
+        pen.setCosmetic(True)
+        self.setPen(pen)
 
-        self.update()
+        for cs in self.cubic_splines:
+            cs.setPen(pen)
+            cs.update()
+
+        for p in self.polygons:
+            p.setPen(pen)
+            p.update()
+
+        # x, y = self.cubic_spline.indices
+        # self.annotation_data.data[-(self.index + 1), x] = y
+        super().update()
 
     def view(self):
         return self.scene().views()[0]
 
-    def mousePressEvent(self, event):
-        event.ignore()
-        # super().mousePressEvent(event)
-        # self.view().tool.mouse_press_handler(self, event)
-        # event.accept()
-
     def mouseDoubleClickEvent(self, event):
-        self.view().tool.mouse_doubleclick_handler(self, event)
-        event.accept()
+        modifiers = QApplication.keyboardModifiers()
+        if modifiers == Qt.ControlModifier:
+            print(self.polygons, self.cubic_splines)
+            event.ignore()
+            return
+        # if event.modifiers() &
+        pos = event.scenePos()
+        # Ignore event if not inside the scene
+        if not self.scene().sceneRect().contains(pos):
+            event.ignore()
+            return
 
-    def mouseReleaseEvent(self, event):
-        event.ignore()
-        # super().mouseReleaseEvent(event)
-        # self.view().tool.mouse_release_handler(self, event)
-        # event.accept()
+        # Find polygon/curve intersecting the new Knot
+        cs = [cs for cs in self.cubic_splines if pos in cs]
+        # if pos is in any existing curve add the knot to this curve
+        if cs:
+            command = layer_commands.AddKnot(cs[0], pos)
+        elif type(self.focusItem()) == LayerItem or self.focusItem() is None:
+            command = layer_commands.NewCurve(self, event.scenePos())
+        # else if there is a focusitem add the knot to this items curve
+        else:
+            if type(self.focusItem()) is CubicSpline:
+                bspline = self.focusItem()
+            elif type(self.focusItem()) is CubicSplineKnotItem:
+                bspline = self.focusItem().bspline
+            else:
+                print("unexpected focus item ", self.focusItem())
+                return
+            # Ignore event if there is other curve in between focusItem and new knot
+            if any(
+                [
+                    pos.x() < cs.start.x() < bspline.start.x()
+                    or bspline.end.x() < cs.end.x() < pos.x()
+                    for cs in self.cubic_splines
+                ]
+            ):
+                return
+            command = layer_commands.AddKnot(bspline, pos)
 
-    def keyPressEvent(self, event):
-        event.ignore()
-        # self.view().tool.key_press_handler(self, event)
-        # event.accept()
-
-    def keyReleaseEvent(self, event):
-        event.ignore()
-        # self.view().tool.key_release_handler(self, event)
-        # event.accept()
-
-    def mouseMoveEvent(self, event):
-        event.ignore()
-        # super().mouseMoveEvent(event)
-        # self.view().tool.mouse_move_handler(self, event)
-        # event.accept()
-
-    def sync_with_volume(self):
-        self.setVisible(self.annotation_data.meta["visible"])
-        self.setZValue(self.annotation_data.meta["z_value"])
-
-        color = QtGui.QColor()
-        color.setNamedColor(f"#{self.annotation_data.meta['current_color']}")
-
-        pen = QtGui.QPen(color)
-        pen.setWidth(2)
-        pen.setCosmetic(True)
-        self.setPen(pen)
-        self.cubic_spline.setPen(pen)
-        self.start_polygon.setPen(pen)
-        self.end_polygon.setPen(pen)
-        self.update()
+        get_undo_stack("main").push(command)
+        super().mouseDoubleClickEvent(event)
 
     def childNumber(self):
         if self.parentItem():
@@ -743,7 +886,7 @@ class LayerItem(QtWidgets.QGraphicsPathItem):
     def setData(self, column: str, value):
         if column in ["visible", "z_value", "current_color"]:
             setattr(self, column, value)
-            self.scene().update(self.scene().sceneRect())
+            self.update()
             return True
         return False
 
@@ -796,3 +939,13 @@ class LayerItem(QtWidgets.QGraphicsPathItem):
         child2_z = child2.zValue()
         child1.setData("z_value", child2_z)
         child2.setData("z_value", child1_z)
+
+    # def contextMenuEvent(self, event: QGraphicsSceneContextMenuEvent) -> None:
+    #    menu = QMenu()
+    #    new_curve_action = QAction("New Curve")
+    #    menu.addAction(new_curve_action)
+
+    #    menu.exec(event.screenPos())
+
+    #    new_curve_action.triggered.connect(lambda: self.setFocus())
+    #    #super().contextMenuEvent(event)

@@ -7,7 +7,9 @@ from pathlib import Path
 import eyepy as ep
 import requests
 from packaging import version
-from PySide6 import QtGui, QtWidgets
+from PySide6 import QtWidgets
+from PySide6.QtCore import QCoreApplication, QSize
+from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QFileDialog, QMessageBox
 
 import eyelab as el
@@ -32,56 +34,99 @@ class eyelab(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.save_path = None
 
-        self.actionImportVol.triggered.connect(
+        self.action_import_vol.triggered.connect(
             partial(self.import_data, method=ep.import_heyex_vol, format="file")
         )
-        self.actionImportHEXML.triggered.connect(
+        self.action_import_hexml.triggered.connect(
             partial(self.import_data, method=ep.import_heyex_xml, format="folder")
         )
-        self.actionImportRETOUCH.triggered.connect(
+        self.action_import_retouch.triggered.connect(
             partial(self.import_data, method=ep.import_retouch, format="folder")
         )
-        self.actionImportDuke.triggered.connect(
+        self.action_import_duke.triggered.connect(
             partial(self.import_data, method=ep.import_duke_mat, format="file")
         )
-        self.actionImportBSFolder.triggered.connect(
+        self.action_import_bsfolder.triggered.connect(
             partial(self.import_data, method=ep.import_bscan_folder, format="folder")
         )
-        self.actionSaveAnnotations.triggered.connect(self.save_annotations)
-        self.actionSaveAnnotationsAs.triggered.connect(
-            partial(self.save_annotations, save_as=True)
+        # self.action_save_annotations.triggered.connect(self.save_annotations)
+        # self.action_save_annotations_as.triggered.connect(
+        #    partial(self.save_annotations, save_as=True)
+        # )
+        # self.action_load_annotations.triggered.connect(self.load_annotations)
+        self.action_open.triggered.connect(self.load)
+        self.action_save.triggered.connect(self.save)
+        self.action_save_as.triggered.connect(partial(self.save, save_as=True))
+        self.action_shortcut_sheet.triggered.connect(
+            lambda: self.open_help("shortcuts")
         )
-        self.actionLoadAnnotations.triggered.connect(self.load_annotations)
-        self.menuAnnotations.hide()
-        self.actionOpen.triggered.connect(self.load)
-        self.actionSave.triggered.connect(self.save)
-        self.actionSave_As.triggered.connect(partial(self.save, save_as=True))
-        self.actionShortcutSheet.triggered.connect(lambda: self.open_help("shortcuts"))
-        self.actionAreaAnnotationGuide.triggered.connect(
+        self.action_area_annotation_guide.triggered.connect(
             lambda: self.open_help("area_annotation")
         )
-        self.actionLayerAnnotationGuide.triggered.connect(
+        self.action_layer_annotation_guide.triggered.connect(
             lambda: self.open_help("layer_annotation")
         )
-        self.actionRegistrationGuide.triggered.connect(
+        self.action_registration_guide.triggered.connect(
             lambda: self.open_help("registration")
         )
-        self.actionIntroduction.triggered.connect(
+        self.action_introduction.triggered.connect(
             lambda: self.open_help("introduction")
         )
 
         self.workspace = Workspace(parent=self)
-        self.setCentralWidget(self.workspace)
+        self.workspace.undo_stack.cleanChanged.connect(self.toggle_save)
 
+        self._edit_menu_setup()
+        self.setCentralWidget(self.workspace)
         self.check_version()
+
+        # hide options for loading/saving annotations only
+        self.menuAnnotations.deleteLater()
+
         from eyepy.data import load
 
-        # ev = load("drusen_patient")
-        # ev.add_voxel_annotation(
-        #   ep.drusen(ev.layers["RPE"], ev.layers["BM"], ev.shape), name="Drusen"
-        # )
-        # self.workspace.set_data(ev)
-        # self.statusBar().showMessage("Ready")
+        ev = load("drusen_patient")
+        ev.add_voxel_annotation(
+            ep.drusen(ev.layers["RPE"], ev.layers["BM"], ev.shape), name="Drusen"
+        )
+        self.workspace.set_data(ev)
+        self.statusBar().showMessage("Ready")
+
+    def toggle_save(self, clean):
+        if clean:
+            self.action_save.setEnabled(False)
+            self.action_save_as.setEnabled(False)
+            self.setWindowTitle(self.windowTitle().rstrip("*"))
+        else:
+            self.action_save.setEnabled(True)
+            self.action_save_as.setEnabled(True)
+            self.setWindowTitle(self.windowTitle().rstrip("*") + "*")
+
+    def _edit_menu_setup(self):
+        self.action_undo = self.workspace.undo_stack.createUndoAction(self)
+        self.action_redo = self.workspace.undo_stack.createRedoAction(self)
+
+        undo_icon = QIcon()
+        undo_icon.addFile(
+            ":/icons/icons/baseline-undo-24px.svg", QSize(), QIcon.Normal, QIcon.Off
+        )
+        self.action_undo.setIcon(undo_icon)
+
+        redo_icon = QIcon()
+        redo_icon.addFile(
+            ":/icons/icons/baseline-redo-24px.svg", QSize(), QIcon.Normal, QIcon.Off
+        )
+        self.action_redo.setIcon(redo_icon)
+
+        self.action_undo.setShortcut(
+            QCoreApplication.translate("MainWindow", "Ctrl+Z", None)
+        )
+        self.action_redo.setShortcut(
+            QCoreApplication.translate("MainWindow", "Ctrl+Y", None)
+        )
+
+        self.menuEdit.addAction(self.action_undo)
+        self.menuEdit.addAction(self.action_redo)
 
     def check_version(self):
         latest_url = "https://github.com/MedVisBonn/eyelab/releases/latest"
@@ -149,25 +194,20 @@ class eyelab(QtWidgets.QMainWindow, Ui_MainWindow):
             options = QFileDialog.DontUseNativeDialog
         else:
             options = QFileDialog.Options()
-        self.save_path, filter = QFileDialog.getSaveFileName(
+        save_path, filter = QFileDialog.getSaveFileName(
             parent=self, caption="Save", filter="Eye files (*.eye)", options=options
         )
-        if not self.save_path.endswith(".eye"):
-            self.save_path = self.save_path + ".eye"
+        if save_path:
+            if not save_path.endswith(".eye"):
+                save_path = save_path + ".eye"
+            self.save_path = save_path
         return self.save_path
 
     def save(self, save_as=False):
         if self.save_path is None or save_as is True:
             path = self.get_save_location()
-            if path == "":
-                return
-
-        if self.workspace.data is None:
-            message = "No data available for saving"
-            QMessageBox.information(self, "EyeLab", message, QMessageBox.Ok)
-            return
-
-        self.workspace.data.save(self.save_path)
+            if path:
+                self.workspace.data.save(self.save_path)
 
     def load(self):
         if self.workspace.data is not None:
@@ -217,19 +257,6 @@ class eyelab(QtWidgets.QMainWindow, Ui_MainWindow):
             return
         path = QFileDialog.getOpenFileName()[0]
         self.workspace.data.load_annotations(path)
-
-    def closeEvent(self, a0: QtGui.QCloseEvent) -> None:
-        # Save all unchanged annotations
-        # Todo: Ask for save if there is unsaved work
-        if self.workspace.data_changed:
-            message = "Do you want to save before closing?"
-            ret = QMessageBox.question(
-                self, "EyeLab", message, QMessageBox.Ok | QMessageBox.Cancel
-            )
-            if ret == QMessageBox.Ok:
-                self.actionSaveAnnotations.trigger()
-
-        super().closeEvent(a0)
 
 
 def main(log_level=logging.DEBUG):

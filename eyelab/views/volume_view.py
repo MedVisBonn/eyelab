@@ -71,9 +71,6 @@ class VolumeView(CustomGraphicsView):
         self.scene().fake_cursor.setPos(pos)
         self.scene().fake_cursor.show()
 
-        # ToDo: this is an overkill, update only cursor position
-        self.viewport().update()
-
     def wheelEvent(self, event):
         if event.modifiers() == (QtCore.Qt.ControlModifier):
             if event.angleDelta().y() > 0:
