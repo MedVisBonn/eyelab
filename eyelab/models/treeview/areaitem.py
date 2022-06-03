@@ -32,7 +32,7 @@ class AreaItem(QtWidgets.QGraphicsPixmapItem):
 
         self.setFlag(QtWidgets.QGraphicsItem.ItemIsPanel)
 
-    def sync_with_volume(self):
+    def update(self):
         self.setVisible(self.annotation_data.meta["visible"])
         self.setZValue(self.annotation_data.meta["z_value"])
 
@@ -42,6 +42,7 @@ class AreaItem(QtWidgets.QGraphicsPixmapItem):
             [color.red(), color.green(), color.blue()]
         )
         self.update_pixmap()
+        super().update()
 
     def shape(self) -> QtGui.QPainterPath:
         path = QtGui.QPainterPath()

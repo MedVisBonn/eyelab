@@ -592,9 +592,27 @@ class PolygonPath(QGraphicsPathItem):
             points.append(self._start)
 
         if self._end is None:
-            end_index = len(self.heights) - 1
+            end_index = len(self.heights)
         else:
             end_index = int(np.ceil(self._end.x()))
+
+        # Make sure there are no Nans between start and stop - interpolate
+        if any(np.isnan(self.heights[start_index:end_index])):
+            x = np.arange(start_index, end_index, dtype=int)
+            x_full = x[~np.isnan(self.heights[x])]
+            x_empty = x[np.isnan(self.heights[x])]
+            if len(x_full) > 1:
+                f = interp1d(
+                    x_full,
+                    self.heights[x_full],
+                    assume_sorted=True,
+                    copy=False,
+                    bounds_error=False,
+                    fill_value="extrapolate",
+                )
+                # Get height for the middle of each pixel
+                y = f(x_empty + 0.5)
+                self.heights[x_empty] = y
 
         for i in range(start_index, end_index):
             # +0.5 for points to sit in the middle and not start of each pixel (in x direction)
@@ -840,7 +858,7 @@ class LayerItem(QGraphicsPathItem):
         if cs:
             command = layer_commands.AddKnot(cs[0], pos)
         elif type(self.focusItem()) == LayerItem or self.focusItem() is None:
-            command = layer_commands.NewCurve(self, event.scenePos())
+            command = layer_commands.AddCurve(self, event.scenePos())
         # else if there is a focusitem add the knot to this items curve
         else:
             if type(self.focusItem()) is CubicSpline:

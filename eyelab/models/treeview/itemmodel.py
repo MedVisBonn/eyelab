@@ -244,7 +244,7 @@ class VolumeTreeItemModel(TreeItemModel):
 
         self._scenes = {}
 
-    def duplicate(self, index: QtCore.QModelIndex):
+    def duplicate_volume(self, index: QtCore.QModelIndex):
         annotation = index.internalPointer().annotation
         name = annotation.name
         data = annotation.data

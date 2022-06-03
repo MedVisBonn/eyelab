@@ -75,12 +75,13 @@ class ViewTab(QWidget, Ui_SceneTab):
 
         self.imageTreeView.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
         duplicate_action = QtGui.QAction(self)
-        duplicate_action.setText("Duplicate")
-        duplicate_action.triggered.connect(self.duplicate)
+        duplicate_action.setText("Duplicate All")
+        duplicate_action.triggered.connect(self.duplicate_volume)
+
         self.imageTreeView.addAction(duplicate_action)
 
-    def duplicate(self):
-        self.model.duplicate(self.imageTreeView.selectionModel().currentIndex())
+    def duplicate_volume(self):
+        self.model.duplicate_volume(self.imageTreeView.selectionModel().currentIndex())
 
     def tools(self):
         return self._tools

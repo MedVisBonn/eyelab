@@ -11,11 +11,13 @@ class EnfaceView(CustomGraphicsView):
         super().__init__(parent, *args, **kwargs)
         self.setTransformationAnchor(QtWidgets.QGraphicsView.AnchorUnderMouse)
 
+        self.setContextMenuPolicy(Qt.ActionsContextMenu)
+
         bscan_overlay_action = QtGui.QAction()
         bscan_overlay_action.setCheckable(True)
         bscan_overlay_action.setChecked(True)
         bscan_overlay_action.setText("B-scan positions")
-        bscan_overlay_action.toggled.connect(self.test)
+        bscan_overlay_action.triggered.connect(self.test)
         self.addAction(bscan_overlay_action)
 
     def test(self):

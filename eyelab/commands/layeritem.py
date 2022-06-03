@@ -166,6 +166,7 @@ class MoveKnot(QUndoCommand):
             left_neighbours,
             right_neighbours,
         ) = self.bspline.layer_item.get_neighbour_polygons(self.bspline)
+
         if self.knot is self.bspline.knots[-1] and right_neighbours:
             for n in right_neighbours:
                 # Find the closest neighbour that is not covered after the move
@@ -620,7 +621,7 @@ class OptimizeControlPoints(QUndoCommand):
         return True
 
 
-class NewCurve(QUndoCommand):
+class AddCurve(QUndoCommand):
     def __init__(self, layer_item: "layeritem.LayerItem", pos: QPointF):
         self.layeritem = layer_item
 
