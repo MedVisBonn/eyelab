@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v0.3.0 (2022-06-03)
+### Feature
+* **eyelab:** Add redo/undo framework for layer editing ([`6436e4d`](https://github.com/MedVisBonn/eyelab/commit/6436e4da5982fe9a39102e115a9bcccd0ca23378))
+* **eyelab:** Work in progress; layeritem integrated with redo/undo framework ([`ffe7148`](https://github.com/MedVisBonn/eyelab/commit/ffe7148f804eaa56b353d0bf4fcfbcfa4a119c13))
+* **eyelab:** Work in progress; integrate redo/undo framework; edit multiple layer segments independent of each other ([`4d05e94`](https://github.com/MedVisBonn/eyelab/commit/4d05e94397e48c54d9432c3132213e2cddf62dc0))
+
 ## v0.2.0 (2022-04-25)
 ### Feature
 * **layereditor.py:** Enable editing the annotation name ([`7774e5d`](https://github.com/MedVisBonn/eyelab/commit/7774e5dc1597bf7da039fdb46186f51a845873b4))
