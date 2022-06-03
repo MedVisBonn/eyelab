@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "eyelab"
-version = "0.3.0"
+version = "0.3.1"
 description = "Multi-modal annotation tool for eye imaging data"
 authors = ["Olivier Morelle <oli4morelle@gmail.com>"]
 license = "MIT"

@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v0.3.1 (2022-06-03)
+### Fix
+* **layeritem.py:** Check if layer knots are structured correct - update dependencies ([`833f939`](https://github.com/MedVisBonn/eyelab/commit/833f93984906859bcf11261bd266e6c14855da53))
+
 ## v0.3.0 (2022-06-03)
 ### Feature
 * **eyelab:** Add redo/undo framework for layer editing ([`6436e4d`](https://github.com/MedVisBonn/eyelab/commit/6436e4da5982fe9a39102e115a9bcccd0ca23378))
