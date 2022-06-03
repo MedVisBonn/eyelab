@@ -702,6 +702,12 @@ class LayerItem(QGraphicsPathItem):
         super().__init__(parent=parent)
         self.annotation_data = data
         self.index = index
+
+        # Make sure knots are List[Curve[KnotDict]] and not List[KnotDict]
+        knots = self.annotation_data.knots[self.index]
+        if knots:
+            if type(knots[0]) == dict:
+                self.annotation_data.knots[self.index] = [knots]
         self.cubic_splines = [CubicSpline(knots, self) for knots in self.knots]
         self.polygons = self._get_polygons()
 

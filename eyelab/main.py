@@ -83,14 +83,14 @@ class eyelab(QtWidgets.QMainWindow, Ui_MainWindow):
         # hide options for loading/saving annotations only
         self.menuAnnotations.deleteLater()
 
-        from eyepy.data import load
+        # from eyepy.data import load
 
-        ev = load("drusen_patient")
-        ev.add_voxel_annotation(
-            ep.drusen(ev.layers["RPE"], ev.layers["BM"], ev.shape), name="Drusen"
-        )
-        self.workspace.set_data(ev)
-        self.statusBar().showMessage("Ready")
+        # ev = load("drusen_patient")
+        # ev.add_voxel_annotation(
+        #    ep.drusen(ev.layers["RPE"], ev.layers["BM"], ev.shape), name="Drusen"
+        # )
+        # self.workspace.set_data(ev)
+        # self.statusBar().showMessage("Ready")
 
     def toggle_save(self, clean):
         if clean:
