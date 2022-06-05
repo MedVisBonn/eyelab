@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v0.3.2 (2022-06-05)
+### Fix
+* **main.py:** Fix saving ([`bbb8c13`](https://github.com/MedVisBonn/eyelab/commit/bbb8c136654ac3b620ed077eec9b7a7fb0afb72f))
+
 ## v0.3.1 (2022-06-03)
 ### Fix
 * **layeritem.py:** Check if layer knots are structured correct - update dependencies ([`833f939`](https://github.com/MedVisBonn/eyelab/commit/833f93984906859bcf11261bd266e6c14855da53))
