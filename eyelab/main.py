@@ -13,6 +13,7 @@ from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QFileDialog, QMessageBox
 
 import eyelab as el
+from eyelab.commands import get_undo_stack
 from eyelab.config import EYELAB_FOLDER
 from eyelab.dialogs.help import (
     AreaAnnotationHelp,
@@ -170,7 +171,9 @@ class eyelab(QtWidgets.QMainWindow, Ui_MainWindow):
             path = QFileDialog.getExistingDirectory(dir=self.start_dir)
 
         self.save_path = None
+        self.statusBar().showMessage("Import Data...")
         self.workspace.set_data(method(path))
+        self.statusBar().showMessage("Done")
 
     def open_help(self, topic):
         if topic == "introduction":
@@ -205,9 +208,12 @@ class eyelab(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def save(self, save_as=False):
         if self.save_path is None or save_as is True:
-            path = self.get_save_location()
-            if path:
-                self.workspace.data.save(self.save_path)
+            self.get_save_location()
+        if self.save_path:
+            self.statusBar().showMessage("Saving...")
+            self.workspace.data.save(self.save_path)
+            get_undo_stack("main").setClean()
+            self.statusBar().showMessage("Done")
 
     def load(self):
         if self.workspace.data is not None:
@@ -231,8 +237,11 @@ class eyelab(QtWidgets.QMainWindow, Ui_MainWindow):
             self.save_path = path
         else:
             self.save_path = None
+
+        self.statusBar().showMessage("Loading...")
         ev = ep.EyeVolume.load(path)
         self.workspace.set_data(ev)
+        self.statusBar().showMessage("Done")
 
     def save_annotations(self, save_as=False):
         if self.save_path is None or save_as is True:
