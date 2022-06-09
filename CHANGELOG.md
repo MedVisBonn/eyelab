@@ -2,6 +2,13 @@
 
 <!--next-version-placeholder-->
 
+## v0.4.0 (2022-06-09)
+### Feature
+* **scene.py:** Show current B-scan index ([`e5f19e0`](https://github.com/MedVisBonn/eyelab/commit/e5f19e0aa335f6d0ee1a1b1bbdfa77b4c00a66de))
+* **main.py:** Add "thin out" action to deactivate B-scans for sparse annotation. ([`4602daf`](https://github.com/MedVisBonn/eyelab/commit/4602daf5a27a4123ef7acc00fc19fdea1dd796ed))
+* **main.py:** Add About dialog for information about the software ([`5d06f3f`](https://github.com/MedVisBonn/eyelab/commit/5d06f3f619d799fc5fe4ea4e4fa0f317a79b22f1))
+* **main.py:** Show save path and document status in window title ([`a0ec610`](https://github.com/MedVisBonn/eyelab/commit/a0ec610ddded35319e8567adf3c839a888accd14))
+
 ## v0.3.2 (2022-06-05)
 ### Fix
 * **main.py:** Fix saving ([`bbb8c13`](https://github.com/MedVisBonn/eyelab/commit/bbb8c136654ac3b620ed077eec9b7a7fb0afb72f))

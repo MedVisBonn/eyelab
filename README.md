@@ -8,7 +8,7 @@ EyeLab is a multimodal annotation tool for ophthalmological imaging data.
 ![EyeLab](docs/EyeLab.png)
 
 ## Getting Started
-If you are on Windows, download the latest executable [here](https://github.com/MedVisBonn/eyelab/releases/latest/download/EyeLab-v0.3.2.exe) and double click it to start EyeLab.
+If you are on Windows, download the latest executable [here](https://github.com/MedVisBonn/eyelab/releases/latest/download/EyeLab-v0.4.0.exe) and double click it to start EyeLab.
 
 For Linux there is no package, but you might want to have a look at the Developers section for how to set up EyeLab.
 
