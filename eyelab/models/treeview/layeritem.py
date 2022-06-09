@@ -5,15 +5,7 @@ from typing import Any, Dict, List, Tuple
 import eyepy as ep
 import numpy as np
 from PySide6.QtCore import QLineF, QPoint, QPointF, QRectF, Qt
-from PySide6.QtGui import (
-    QAction,
-    QColor,
-    QFocusEvent,
-    QKeyEvent,
-    QPainterPath,
-    QPen,
-    QPolygonF,
-)
+from PySide6.QtGui import QColor, QFocusEvent, QKeyEvent, QPainterPath, QPen, QPolygonF
 from PySide6.QtWidgets import (
     QApplication,
     QGraphicsEllipseItem,
@@ -21,10 +13,8 @@ from PySide6.QtWidgets import (
     QGraphicsLineItem,
     QGraphicsPathItem,
     QGraphicsRectItem,
-    QGraphicsSceneContextMenuEvent,
     QGraphicsSceneHoverEvent,
     QGraphicsSceneMouseEvent,
-    QMenu,
 )
 from scipy.interpolate import interp1d
 
@@ -707,7 +697,9 @@ class LayerItem(QGraphicsPathItem):
         knots = self.annotation_data.knots[self.index]
         if knots:
             if type(knots[0]) == dict:
-                self.annotation_data.knots[self.index] = [knots]
+                self.annotation_data.knots[self.index] = [
+                    sorted(knots, key=lambda x: x["knot_pos"][0])
+                ]
         self.cubic_splines = [CubicSpline(knots, self) for knots in self.knots]
         self.polygons = self._get_polygons()
 

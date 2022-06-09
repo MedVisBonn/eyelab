@@ -8,8 +8,8 @@ import eyepy as ep
 import requests
 from packaging import version
 from PySide6 import QtWidgets
-from PySide6.QtCore import QCoreApplication, QSize
-from PySide6.QtGui import QIcon
+from PySide6.QtCore import QCoreApplication, QSize, Qt
+from PySide6.QtGui import QGuiApplication, QIcon
 from PySide6.QtWidgets import QFileDialog, QMessageBox
 
 import eyelab as el
@@ -73,14 +73,16 @@ class eyelab(QtWidgets.QMainWindow, Ui_MainWindow):
         self.action_introduction.triggered.connect(
             lambda: self.open_help("introduction")
         )
-
         self.workspace = Workspace(parent=self)
-        self.workspace.undo_stack.cleanChanged.connect(self.toggle_save)
+        self.workspace.undo_stack.cleanChanged.connect(
+            lambda x: self.setWindowModified(not x)
+        )
 
         self._edit_menu_setup()
         self.setCentralWidget(self.workspace)
         self.check_version()
 
+        self.setWindowModified(False)
         # hide options for loading/saving annotations only
         self.menuAnnotations.deleteLater()
 
@@ -93,15 +95,14 @@ class eyelab(QtWidgets.QMainWindow, Ui_MainWindow):
         # self.workspace.set_data(ev)
         # self.statusBar().showMessage("Ready")
 
-    def toggle_save(self, clean):
-        if clean:
-            self.action_save.setEnabled(False)
-            self.action_save_as.setEnabled(False)
-            self.setWindowTitle(self.windowTitle().rstrip("*"))
-        else:
-            self.action_save.setEnabled(True)
-            self.action_save_as.setEnabled(True)
-            self.setWindowTitle(self.windowTitle().rstrip("*") + "*")
+    def setWindowModified(self, value: bool) -> None:
+        super().setWindowModified(value)
+        self.action_save.setEnabled(value)
+        self.action_save_as.setEnabled(value)
+
+    def setWindowFilePath(self, filePath: str) -> None:
+        super().setWindowFilePath(filePath)
+        self.setWindowTitle(f"EyeLab - {self.windowFilePath()}[*]")
 
     def _edit_menu_setup(self):
         self.action_undo = self.workspace.undo_stack.createUndoAction(self)
@@ -150,8 +151,8 @@ class eyelab(QtWidgets.QMainWindow, Ui_MainWindow):
 
     @property
     def start_dir(self):
-        if self.save_path:
-            return str(Path(self.save_path).parent)
+        if self.windowFilePath():
+            return str(Path(self.windowFilePath()).parent)
         else:
             return str(Path.home())
 
@@ -170,27 +171,9 @@ class eyelab(QtWidgets.QMainWindow, Ui_MainWindow):
         elif format == "folder":
             path = QFileDialog.getExistingDirectory(dir=self.start_dir)
 
-        self.save_path = None
-        self.statusBar().showMessage("Import Data...")
         self.workspace.set_data(method(path))
-        self.statusBar().showMessage("Done")
-
-    def open_help(self, topic):
-        if topic == "introduction":
-            dialog = IntroductionHelp(self)
-        elif topic == "shortcuts":
-            dialog = ShortcutHelp(self)
-        elif topic == "area_annotation":
-            dialog = AreaAnnotationHelp(self)
-        elif topic == "layer_annotation":
-            dialog = LayerAnnotationHelp(self)
-        # elif topic == "registration":
-        #    dialog = RegistrationHelp(self)
-        else:
-            raise ValueError("topic not available")
-
-        if dialog.exec() == QtWidgets.QDialog.Rejected:
-            pass
+        self.setWindowFilePath("")
+        get_undo_stack("main").clear()
 
     def get_save_location(self):
         if "PYCHARM_HOSTED" in os.environ:
@@ -203,17 +186,17 @@ class eyelab(QtWidgets.QMainWindow, Ui_MainWindow):
         if save_path:
             if not save_path.endswith(".eye"):
                 save_path = save_path + ".eye"
-            self.save_path = save_path
-        return self.save_path
+            self.setWindowFilePath(save_path)
+        return save_path
 
     def save(self, save_as=False):
-        if self.save_path is None or save_as is True:
+        if self.windowFilePath() == "" or save_as is True:
             self.get_save_location()
-        if self.save_path:
+        if self.windowFilePath():
             self.statusBar().showMessage("Saving...")
-            self.workspace.data.save(self.save_path)
+            self.workspace.data.save(self.windowFilePath())
             get_undo_stack("main").setClean()
-            self.statusBar().showMessage("Done")
+            self.statusBar().showMessage("Done", 2000)
 
     def load(self):
         if self.workspace.data is not None:
@@ -233,39 +216,30 @@ class eyelab(QtWidgets.QMainWindow, Ui_MainWindow):
         )[0]
         if path == "":
             return
-        if not path.startswith("/run/user"):
-            self.save_path = path
-        else:
-            self.save_path = None
+        self.setWindowFilePath(path)
 
         self.statusBar().showMessage("Loading...")
         ev = ep.EyeVolume.load(path)
         self.workspace.set_data(ev)
-        self.statusBar().showMessage("Done")
+        get_undo_stack("main").clear()
+        self.statusBar().showMessage("Done", 2000)
 
-    def save_annotations(self, save_as=False):
-        if self.save_path is None or save_as is True:
-            path = self.get_save_location()
-            if path == "":
-                return
+    def open_help(self, topic):
+        if topic == "introduction":
+            dialog = IntroductionHelp(self)
+        elif topic == "shortcuts":
+            dialog = ShortcutHelp(self)
+        elif topic == "area_annotation":
+            dialog = AreaAnnotationHelp(self)
+        elif topic == "layer_annotation":
+            dialog = LayerAnnotationHelp(self)
+        # elif topic == "registration":
+        #    dialog = RegistrationHelp(self)
+        else:
+            raise ValueError("topic not available")
 
-        self.workspace.data.save_annotations(self.save_path)
-
-    def load_annotations(self):
-        if self.workspace.data is None:
-            message = (
-                "Annotations can only be loaded after importing the corresponding data."
-            )
-            QMessageBox.information(self, "EyeLab", message, QMessageBox.Ok)
-            return
-        message = "Loading annotations replaces all current annotations. Do you want to proceed?"
-        ret = QMessageBox.question(
-            self, "EyeLab", message, QMessageBox.Ok | QMessageBox.Cancel
-        )
-        if ret == QMessageBox.Cancel:
-            return
-        path = QFileDialog.getOpenFileName()[0]
-        self.workspace.data.load_annotations(path)
+        if dialog.exec() == QtWidgets.QDialog.Rejected:
+            pass
 
 
 def main(log_level=logging.DEBUG):
