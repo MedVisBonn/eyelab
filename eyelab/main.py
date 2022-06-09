@@ -5,15 +5,17 @@ from functools import partial
 from pathlib import Path
 
 import eyepy as ep
+import numpy as np
 import requests
 from packaging import version
 from PySide6 import QtWidgets
-from PySide6.QtCore import QCoreApplication, QSize, Qt
-from PySide6.QtGui import QAction, QGuiApplication, QIcon
+from PySide6.QtCore import QCoreApplication, QSize
+from PySide6.QtGui import QAction, QIcon
 from PySide6.QtWidgets import QFileDialog, QMessageBox
 
 import eyelab as el
 from eyelab.commands import get_undo_stack
+from eyelab.commands.thin_out import ThinOut
 from eyelab.config import EYELAB_FOLDER
 from eyelab.dialogs.help import (
     AreaAnnotationHelp,
@@ -80,6 +82,7 @@ class eyelab(QtWidgets.QMainWindow, Ui_MainWindow):
         )
 
         self._edit_menu_setup()
+        self._tools_menu_setup()
         self.setCentralWidget(self.workspace)
         self.check_version()
 
@@ -130,6 +133,23 @@ class eyelab(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.menuEdit.addAction(self.action_undo)
         self.menuEdit.addAction(self.action_redo)
+
+    def _tools_menu_setup(self):
+        self.action_thin_out = QAction(
+            QCoreApplication.translate("MainWindow", "&Thin Out"), self
+        )
+        self.action_thin_out.setStatusTip(
+            QCoreApplication.translate(
+                "MainWindow", "Deactivte B-scans for sparse annotation"
+            )
+        )
+        self.action_thin_out.triggered.connect(
+            lambda: get_undo_stack("main").push(
+                ThinOut(self.workspace.data, n=5, region=(1 / 3, 2 / 3))
+            )
+        )
+
+        self.menuTools.addAction(self.action_thin_out)
 
     def check_version(self):
         latest_url = "https://github.com/MedVisBonn/eyelab/releases/latest"

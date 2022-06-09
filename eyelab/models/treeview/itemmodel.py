@@ -234,6 +234,10 @@ class VolumeTreeItemModel(TreeItemModel):
                 "name": "Layers",
             }
 
+        for bscan in self._data.meta["bscan_meta"]:
+            if not "disabled" in bscan:
+                bscan["disabled"] = False
+
         self._init_model()
         self._annotations = DynamicDefaultDict(
             lambda index: self._get_annotations(index)
@@ -243,6 +247,9 @@ class VolumeTreeItemModel(TreeItemModel):
         self.dataChanged.connect(self.sync_annotations_to_tab)
 
         self._scenes = {}
+
+        # Set to first active slice
+        self.next_slice(None)
 
     def duplicate_volume(self, index: QtCore.QModelIndex):
         annotation = index.internalPointer().annotation
@@ -274,16 +281,30 @@ class VolumeTreeItemModel(TreeItemModel):
             self.tool.paint_preview.setParentItem(self.scene.mouseGrabberItem())
 
     def next_slice(self, current_tool):
-        if self.current_slice < len(self._data) - 1:
-            self.current_slice += 1
-            if not self.scene.mouseGrabberItem() is None:
-                current_tool.paint_preview.setParentItem(self.scene.mouseGrabberItem())
+        slice = self.current_slice
+        while slice < len(self._data) - 1:
+            slice += 1
+            if (
+                self._data.meta["bscan_meta"][slice]["disabled"] is False
+            ):  # slice is active
+                self.current_slice = slice
+                break
+
+        if not self.scene.mouseGrabberItem() is None:
+            current_tool.paint_preview.setParentItem(self.scene.mouseGrabberItem())
 
     def last_slice(self, current_tool):
-        if self.current_slice > 0:
-            self.current_slice -= 1
-            if not self.scene.mouseGrabberItem() is None:
-                current_tool.paint_preview.setParentItem(self.scene.mouseGrabberItem())
+        slice = self.current_slice
+        while slice > 0:
+            slice -= 1
+            if (
+                self._data.meta["bscan_meta"][slice]["disabled"] is False
+            ):  # slice is active
+                self.current_slice = slice
+                break
+
+        if not self.scene.mouseGrabberItem() is None:
+            current_tool.paint_preview.setParentItem(self.scene.mouseGrabberItem())
 
     def sync_annotations_to_tab(self):
         self.annotations.update()
