@@ -9,7 +9,7 @@ import requests
 from packaging import version
 from PySide6 import QtWidgets
 from PySide6.QtCore import QCoreApplication, QSize, Qt
-from PySide6.QtGui import QGuiApplication, QIcon
+from PySide6.QtGui import QAction, QGuiApplication, QIcon
 from PySide6.QtWidgets import QFileDialog, QMessageBox
 
 import eyelab as el
@@ -73,6 +73,7 @@ class eyelab(QtWidgets.QMainWindow, Ui_MainWindow):
         self.action_introduction.triggered.connect(
             lambda: self.open_help("introduction")
         )
+        self.action_About.triggered.connect(self.show_about)
         self.workspace = Workspace(parent=self)
         self.workspace.undo_stack.cleanChanged.connect(
             lambda x: self.setWindowModified(not x)
@@ -149,6 +150,21 @@ class eyelab(QtWidgets.QMainWindow, Ui_MainWindow):
             msgBox.setDefaultButton(QMessageBox.Ok)
             ret = msgBox.exec()
 
+    def show_about(self):
+        version = el.__version__
+        repository = f"https://github.com/MedVisBonn/eyelab/"
+        msgBox = QMessageBox()
+        msgBox.setWindowTitle("About")
+        msgBox.setText(f"<h1>EyeLab v{version}<\h1>")
+        msgBox.setInformativeText(
+            f"<b>Repository:</b> <p> <a href='{repository}'>{repository}</a> </p>"
+            f"<b>Contact:</b> <p> Olivier Morelle <br> oli4morelle@gmail.com </p>"
+            f"<b>Cite:</b> <p> <a href='https://doi.org/10.5281/zenodo.6614972'>https://doi.org/10.5281/zenodo.6614972</a></p>"
+        )
+        msgBox.setStandardButtons(QMessageBox.Ok)
+        msgBox.setDefaultButton(QMessageBox.Ok)
+        msgBox.exec()
+
     @property
     def start_dir(self):
         if self.windowFilePath():
@@ -190,7 +206,8 @@ class eyelab(QtWidgets.QMainWindow, Ui_MainWindow):
         return save_path
 
     def save(self, save_as=False):
-        if self.windowFilePath() == "" or save_as is True:
+        path = self.windowFilePath()
+        if save_as is True or path == "" or path.startswith("/run/user"):
             self.get_save_location()
         if self.windowFilePath():
             self.statusBar().showMessage("Saving...")

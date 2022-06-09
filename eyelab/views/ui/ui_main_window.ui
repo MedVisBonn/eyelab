@@ -31,7 +31,7 @@
     </property>
     <widget class="QMenu" name="menuUpload">
      <property name="title">
-      <string>Import</string>
+      <string>&amp;Import</string>
      </property>
      <addaction name="action_import_vol"/>
      <addaction name="action_import_hexml"/>
@@ -75,7 +75,7 @@
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
-     <string>Help</string>
+     <string>&amp;Help</string>
     </property>
     <addaction name="action_introduction"/>
     <addaction name="action_layer_annotation_guide"/>
@@ -83,9 +83,16 @@
     <addaction name="action_registration_guide"/>
     <addaction name="separator"/>
     <addaction name="action_shortcut_sheet"/>
+    <addaction name="action_About"/>
+   </widget>
+   <widget class="QMenu" name="menuTools">
+    <property name="title">
+     <string>&amp;Tools</string>
+    </property>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
+   <addaction name="menuTools"/>
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
@@ -121,7 +128,7 @@
   </action>
   <action name="action_import_vol">
    <property name="text">
-    <string>Heyex Raw (.vol)</string>
+    <string>Heyex Raw (.&amp;vol)</string>
    </property>
   </action>
   <action name="action_save_annotations">
@@ -137,17 +144,17 @@
   </action>
   <action name="action_import_bsfolder">
    <property name="text">
-    <string>B-Scans from folder</string>
+    <string>B-Scans from &amp;folder</string>
    </property>
   </action>
   <action name="action_layer_annotation_guide">
    <property name="text">
-    <string>Layer Annotation Guide</string>
+    <string>&amp;Layer Annotation Guide</string>
    </property>
   </action>
   <action name="action_area_annotation_guide">
    <property name="text">
-    <string>Area Annotation Guide</string>
+    <string>&amp;Area Annotation Guide</string>
    </property>
   </action>
   <action name="action_registration_guide">
@@ -160,27 +167,27 @@
   </action>
   <action name="action_shortcut_sheet">
    <property name="text">
-    <string>Shortcut Sheet</string>
+    <string>&amp;Shortcut Sheet</string>
    </property>
   </action>
   <action name="action_introduction">
    <property name="text">
-    <string>Introduction</string>
+    <string>&amp;Introduction</string>
    </property>
   </action>
   <action name="action_import_retouch">
    <property name="text">
-    <string>RETOUCH</string>
+    <string>&amp;RETOUCH</string>
    </property>
   </action>
   <action name="action_import_duke">
    <property name="text">
-    <string>Duke (Farsiu 2014)</string>
+    <string>&amp;Duke (Farsiu 2014)</string>
    </property>
   </action>
   <action name="action_import_hexml">
    <property name="text">
-    <string>Heyex XML (.xml)</string>
+    <string>Heyex XML (.&amp;xml)</string>
    </property>
   </action>
   <action name="action_load_annotations">
@@ -227,6 +234,11 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+A</string>
+   </property>
+  </action>
+  <action name="action_About">
+   <property name="text">
+    <string>A&amp;bout</string>
    </property>
   </action>
  </widget>

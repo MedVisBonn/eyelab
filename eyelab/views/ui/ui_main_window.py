@@ -77,6 +77,8 @@ class Ui_MainWindow(object):
         self.action_save.setObjectName(u"action_save")
         self.action_save_as = QAction(MainWindow)
         self.action_save_as.setObjectName(u"action_save_as")
+        self.action_About = QAction(MainWindow)
+        self.action_About.setObjectName(u"action_About")
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         self.verticalLayout = QVBoxLayout(self.centralwidget)
@@ -98,6 +100,8 @@ class Ui_MainWindow(object):
         self.menuEdit.setTearOffEnabled(False)
         self.menuHelp = QMenu(self.menubar)
         self.menuHelp.setObjectName(u"menuHelp")
+        self.menuTools = QMenu(self.menubar)
+        self.menuTools.setObjectName(u"menuTools")
         MainWindow.setMenuBar(self.menubar)
         self.statusbar = QStatusBar(MainWindow)
         self.statusbar.setObjectName(u"statusbar")
@@ -105,6 +109,7 @@ class Ui_MainWindow(object):
 
         self.menubar.addAction(self.menuFile.menuAction())
         self.menubar.addAction(self.menuEdit.menuAction())
+        self.menubar.addAction(self.menuTools.menuAction())
         self.menubar.addAction(self.menuHelp.menuAction())
         self.menuFile.addSeparator()
         self.menuFile.addAction(self.action_open)
@@ -131,6 +136,7 @@ class Ui_MainWindow(object):
         self.menuHelp.addAction(self.action_registration_guide)
         self.menuHelp.addSeparator()
         self.menuHelp.addAction(self.action_shortcut_sheet)
+        self.menuHelp.addAction(self.action_About)
 
         self.retranslateUi(MainWindow)
 
@@ -159,37 +165,37 @@ class Ui_MainWindow(object):
         )
         # endif // QT_CONFIG(shortcut)
         self.action_import_vol.setText(
-            QCoreApplication.translate("MainWindow", u"Heyex Raw (.vol)", None)
+            QCoreApplication.translate("MainWindow", u"Heyex Raw (.&vol)", None)
         )
         self.action_save_annotations.setText(
             QCoreApplication.translate("MainWindow", u"Save", None)
         )
         self.action_import_bsfolder.setText(
-            QCoreApplication.translate("MainWindow", u"B-Scans from folder", None)
+            QCoreApplication.translate("MainWindow", u"B-Scans from &folder", None)
         )
         self.action_layer_annotation_guide.setText(
-            QCoreApplication.translate("MainWindow", u"Layer Annotation Guide", None)
+            QCoreApplication.translate("MainWindow", u"&Layer Annotation Guide", None)
         )
         self.action_area_annotation_guide.setText(
-            QCoreApplication.translate("MainWindow", u"Area Annotation Guide", None)
+            QCoreApplication.translate("MainWindow", u"&Area Annotation Guide", None)
         )
         self.action_registration_guide.setText(
             QCoreApplication.translate("MainWindow", u"Registration Guide", None)
         )
         self.action_shortcut_sheet.setText(
-            QCoreApplication.translate("MainWindow", u"Shortcut Sheet", None)
+            QCoreApplication.translate("MainWindow", u"&Shortcut Sheet", None)
         )
         self.action_introduction.setText(
-            QCoreApplication.translate("MainWindow", u"Introduction", None)
+            QCoreApplication.translate("MainWindow", u"&Introduction", None)
         )
         self.action_import_retouch.setText(
-            QCoreApplication.translate("MainWindow", u"RETOUCH", None)
+            QCoreApplication.translate("MainWindow", u"&RETOUCH", None)
         )
         self.action_import_duke.setText(
-            QCoreApplication.translate("MainWindow", u"Duke (Farsiu 2014)", None)
+            QCoreApplication.translate("MainWindow", u"&Duke (Farsiu 2014)", None)
         )
         self.action_import_hexml.setText(
-            QCoreApplication.translate("MainWindow", u"Heyex XML (.xml)", None)
+            QCoreApplication.translate("MainWindow", u"Heyex XML (.&xml)", None)
         )
         self.action_load_annotations.setText(
             QCoreApplication.translate("MainWindow", u"Load", None)
@@ -221,14 +227,20 @@ class Ui_MainWindow(object):
             QCoreApplication.translate("MainWindow", u"Ctrl+A", None)
         )
         # endif // QT_CONFIG(shortcut)
+        self.action_About.setText(
+            QCoreApplication.translate("MainWindow", u"A&bout", None)
+        )
         self.menuFile.setTitle(QCoreApplication.translate("MainWindow", u"&File", None))
         self.menuUpload.setTitle(
-            QCoreApplication.translate("MainWindow", u"Import", None)
+            QCoreApplication.translate("MainWindow", u"&Import", None)
         )
         self.menuAnnotations.setTitle(
             QCoreApplication.translate("MainWindow", u"Annotations", None)
         )
         self.menuEdit.setTitle(QCoreApplication.translate("MainWindow", u"&Edit", None))
-        self.menuHelp.setTitle(QCoreApplication.translate("MainWindow", u"Help", None))
+        self.menuHelp.setTitle(QCoreApplication.translate("MainWindow", u"&Help", None))
+        self.menuTools.setTitle(
+            QCoreApplication.translate("MainWindow", u"&Tools", None)
+        )
 
     # retranslateUi
