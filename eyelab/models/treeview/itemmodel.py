@@ -272,6 +272,9 @@ class VolumeTreeItemModel(TreeItemModel):
             scene.addItem(self.annotations)
             self._scenes[self.current_slice] = scene
 
+            # Add foreground showing the B-scan index
+            scene.foreground_on = True
+
         return self._scenes[self.current_slice]
 
     def set_current_scene(self):

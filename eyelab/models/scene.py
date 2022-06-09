@@ -1,9 +1,11 @@
 import logging
 from collections import namedtuple
+from typing import Union
 
 import eyepy as ep
 from PySide6 import QtCore, QtGui, QtWidgets
-from PySide6.QtCore import QRectF, Qt
+from PySide6.QtCore import QRect, QRectF, Qt
+from PySide6.QtGui import QColor, QPainter, QStaticText
 from PySide6.QtWidgets import QGraphicsSceneContextMenuEvent
 
 from eyelab.models.utils import array2qgraphicspixmapitem
@@ -22,6 +24,7 @@ class CustomGraphicsScene(QtWidgets.QGraphicsScene):
         self._widthForHeightFactor = 1
 
         self.background_on = True
+        self.foreground_on = False
         self.fake_cursor = self.addPixmap(
             QtGui.QPixmap(":/cursors/cursors/navigation_cursor.svg")
         )
@@ -33,6 +36,18 @@ class CustomGraphicsScene(QtWidgets.QGraphicsScene):
         self.setItemIndexMethod(QtWidgets.QGraphicsScene.NoIndex)
 
         logger.debug("CustomGraphicsScene: __init__ done")
+
+    def drawForeground(self, painter: QPainter, rect: Union[QRectF, QRect]) -> None:
+        if self.foreground_on:
+            text = QStaticText(f"Slice {self.data.index}")
+
+            painter.setPen(QColor().fromRgb(255, 255, 255))
+            font = painter.font()
+            font.setPixelSize(8)
+            painter.setFont(font)
+            painter.drawStaticText(10, 10, text)
+
+        super().drawForeground(painter, rect)
 
     def drawBackground(self, painter: QtGui.QPainter, rect: QtCore.QRectF):
         if self.background_on:

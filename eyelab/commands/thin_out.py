@@ -18,7 +18,7 @@ class ThinOut(QUndoCommand):
         self.setText("Thin out volume")
 
     def _get_sparse_indices(self, n, region=(0, 1)):
-        n_bscans = len(self.workspace.data)
+        n_bscans = len(self.data)
 
         start_index = int(round(region[0] * n_bscans))
         stop_index = int(round(region[1] * n_bscans))
