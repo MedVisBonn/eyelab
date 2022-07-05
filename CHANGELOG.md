@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v0.4.1 (2022-07-05)
+### Fix
+* **pyproject.toml:** Update dependencies and set numpy ">=1.22" to solve dependabot alert ([`94841f5`](https://github.com/MedVisBonn/eyelab/commit/94841f555aab4c237e5ebc94d8f999ef4dcf6e64))
+* **main.py:** Always enable save button until areaitem is integrated in undo/redo framework - closes #2 ([`9889a33`](https://github.com/MedVisBonn/eyelab/commit/9889a33e84105edc07c7c177898b55745d64c739))
+* **layeritem.py:** Fix bug where b-scans can not be initialized because of directly neighbouring spline regions ([`dba053c`](https://github.com/MedVisBonn/eyelab/commit/dba053cb8c796bcae6ae2a0059b17cd1f3e9800d))
+
 ## v0.4.0 (2022-06-09)
 ### Feature
 * **scene.py:** Show current B-scan index ([`e5f19e0`](https://github.com/MedVisBonn/eyelab/commit/e5f19e0aa335f6d0ee1a1b1bbdfa77b4c00a66de))
