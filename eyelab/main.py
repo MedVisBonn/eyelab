@@ -77,9 +77,10 @@ class eyelab(QtWidgets.QMainWindow, Ui_MainWindow):
         )
         self.action_About.triggered.connect(self.show_about)
         self.workspace = Workspace(parent=self)
-        self.workspace.undo_stack.cleanChanged.connect(
-            lambda x: self.setWindowModified(not x)
-        )
+        # Todo: reenable if areaitem is integrated in the undo/redo framework
+        # self.workspace.undo_stack.cleanChanged.connect(
+        #    lambda x: self.setWindowModified(not x)
+        # )
 
         self._edit_menu_setup()
         self._tools_menu_setup()
@@ -101,8 +102,10 @@ class eyelab(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def setWindowModified(self, value: bool) -> None:
         super().setWindowModified(value)
-        self.action_save.setEnabled(value)
-        self.action_save_as.setEnabled(value)
+
+        # Todo: reenable if areaitem is integrated in the undo/redo framework
+        # self.action_save.setEnabled(value)
+        # self.action_save_as.setEnabled(value)
 
     def setWindowFilePath(self, filePath: str) -> None:
         super().setWindowFilePath(filePath)
