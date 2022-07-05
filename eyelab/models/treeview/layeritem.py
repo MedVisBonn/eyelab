@@ -709,9 +709,9 @@ class LayerItem(QGraphicsPathItem):
 
         for cs in self.cubic_splines:
             left, right = self.get_neighbour_elements(cs)
-            if left:
+            if left and type(left) is PolygonPath:
                 left.end = cs.start
-            if right:
+            if right and type(right) is PolygonPath:
                 right.start = cs.end
         self.update()
 
