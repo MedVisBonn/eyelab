@@ -19,8 +19,8 @@ authors:
       Ophthalmology
 identifiers:
   - type: url
-    value: 'https://github.com/MedVisBonn/eyelab/tree/v0.4.1'
-repository-code: 'https://github.com/MedVisBonn/eyelab/tree/v0.4.1'
+    value: 'https://github.com/MedVisBonn/eyelab/tree/v0.4.2'
+repository-code: 'https://github.com/MedVisBonn/eyelab/tree/v0.4.2'
 abstract: >-
   Annotation of eye imaging data such as OCT or
   fundus images is a common task when building a
@@ -43,5 +43,5 @@ keywords:
   - Areas
   - HEYEX
 license: MIT
-version: v0.4.1
+version: v0.4.2
 date-released: '2022-03-31'

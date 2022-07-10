@@ -2,6 +2,14 @@
 
 <!--next-version-placeholder-->
 
+## v0.4.2 (2022-07-10)
+### Fix
+* **commands/layeritem.py:** Optimize control points before updating the spline in case of a deleted knot; have end knot deletion without neighbouring polygon covered ([`891fb18`](https://github.com/MedVisBonn/eyelab/commit/891fb1884836893f7219a97a87e472ca147c8ffe))
+* **treeview/layeritem.py:** Compute start and end index for spline with non x.5 knot positions in mind ([`f0c7f8b`](https://github.com/MedVisBonn/eyelab/commit/f0c7f8bd58128087a313ee526bf3b1d12a54f10c))
+
+### Documentation
+* **README.md:** Fix wrong link to eyepy ([`e28f334`](https://github.com/MedVisBonn/eyelab/commit/e28f33424bf75b11ec5b7b9ac83e93ac8ded0d7b))
+
 ## v0.4.1 (2022-07-05)
 ### Fix
 * **pyproject.toml:** Update dependencies and set numpy ">=1.22" to solve dependabot alert ([`94841f5`](https://github.com/MedVisBonn/eyelab/commit/94841f555aab4c237e5ebc94d8f999ef4dcf6e64))
