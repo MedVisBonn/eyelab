@@ -386,8 +386,12 @@ class CubicSpline(QGraphicsPathItem):
 
     def indices(self):
         self.update()
-        start = np.floor(self.start.x()).astype(int)
-        end = np.floor(self.end.x()).astype(int)
+        # Older versions of EyeLab did not set all knots to x.5
+        # Add or subtract 0.5 before determining start and end of  the indices
+        # to make sure that start and end are in the correct range - no
+        # out of bounds error by interpolator
+        start = np.floor(self.start.x() + 0.499).astype(int)
+        end = np.floor(self.end.x() - 0.5).astype(int)
         if start == end:
             return {start: self.start.y()}
 
