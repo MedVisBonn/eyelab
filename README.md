@@ -132,5 +132,5 @@ poetry runpyinstaller --hidden-import imagecodecs --collect-submodules imagecode
 
 # Related Projects:
 
-+ [eyepie](https://github.com/MedVisBonn/eyepie): The Python package EyeLab uses in the back
++ [eyepie](https://github.com/MedVisBonn/eyepy): The Python package EyeLab uses in the back
 + [OCT-Converter](https://github.com/marksgraham/OCT-Converter): Extract raw optical coherence tomography (OCT) and fundus data from proprietary file formats. (.fds/.fda/.e2e/.img/.oct/.dcm)
