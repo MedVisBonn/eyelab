@@ -443,11 +443,19 @@ class DeleteKnot(QUndoCommand):
             # Delete Bspline object when last knot is removed
             DeleteCurve(self.bspline, self)
         elif self.knot is self.bspline.knots[0]:
-            p = neighbours[0] if neighbours[0].end == self.knot.center else None
+            p = (
+                neighbours[0]
+                if (neighbours[0] and neighbours[0].end == self.knot.center)
+                else None
+            )
             if p:
                 ChangePolygon(p, end=self.bspline.knots[1].center, parent=self)
         elif self.knot is self.bspline.knots[-1]:
-            p = neighbours[1] if neighbours[1].start == self.knot.center else None
+            p = (
+                neighbours[1]
+                if (neighbours[1] and neighbours[1].start == self.knot.center)
+                else None
+            )
             if p:
                 ChangePolygon(p, start=self.bspline.knots[-2].center, parent=self)
 
@@ -458,8 +466,8 @@ class DeleteKnot(QUndoCommand):
             self.bspline.knots.pop(self.index)
             self.bspline._knots.pop(self.index)
 
-            self.bspline.update()
         super().redo()
+        self.bspline.update()
 
     def undo(self) -> None:
         logger.debug(f"Undo: {self.text()}")
