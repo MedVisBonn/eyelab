@@ -36,24 +36,19 @@ class VolumeView(CustomGraphicsView):
         logger.debug("VolumeView: data is set")
 
     def map_to_localizer(self, pos):
+        tform = self.data.localizer_transform
+        # Invert slice axis
         slice_n = pos.toPoint().y()
-        lclzr_scale_x = self.data.localizer.scale_x
-        lclzr_scale_y = self.data.localizer.scale_y
-        start_y = self.data[slice_n].meta["start_pos"][1] / lclzr_scale_y
-        end_y = self.data[slice_n].meta["end_pos"][1] / lclzr_scale_y
-        size_x = self.data.size_x
-
-        x = self.data[slice_n].meta["start_pos"][0] / lclzr_scale_x + pos.x()
-        y = start_y + (start_y - end_y) / size_x * pos.x()
-
+        slice_n = self.data.size_z - slice_n - 1
+        x, y = tform([(pos.x(), slice_n)])[0]
         return QPointF(x, y)
 
     def map_from_localizer(self, pos):
-        lclzr_scale_x = self.data.localizer.scale_x
-        current_slice = self.view_tab.model.current_slice
-        x = pos.x() - self.data[current_slice].meta["start_pos"][0] / lclzr_scale_x
-        y = self.closest_slice(pos)
-        return QPointF(x, y)
+        # Map a point from localizer space to (x, slice) in B-scan coordinates
+        tform = self.data.localizer_transform
+        x, y = tform.inverse([(pos.x(), pos.y())])[0]
+        slice_idx = self.closest_slice(pos)
+        return QPointF(x, slice_idx)
 
     def set_fake_cursor(self, pos, sender):
         # Turn localizer position to x pos and slice number for OCT
@@ -92,7 +87,6 @@ class VolumeView(CustomGraphicsView):
                 self.cursorPosChanged.emit(pos_on_localizer, self)
             event.accept()
         else:
-
             super().wheelEvent(event)
 
     def mouseMoveEvent(self, event):
@@ -143,5 +137,5 @@ class VolumeView(CustomGraphicsView):
     @staticmethod
     def point_line_distance(point, line):
         return np.abs(line.a * point.x + line.b * point.y + line.c) / np.sqrt(
-            line.a ** 2 + line.b ** 2
+            line.a**2 + line.b**2
         )
