@@ -5,7 +5,6 @@ from functools import partial
 from pathlib import Path
 
 import eyepy as ep
-import numpy as np
 import requests
 from packaging import version
 from PySide6 import QtWidgets
@@ -171,14 +170,14 @@ class eyelab(QtWidgets.QMainWindow, Ui_MainWindow):
             )
             msgBox.setStandardButtons(QMessageBox.Ok)
             msgBox.setDefaultButton(QMessageBox.Ok)
-            ret = msgBox.exec()
+            msgBox.exec()
 
     def show_about(self):
         version = el.__version__
-        repository = f"https://github.com/MedVisBonn/eyelab/"
+        repository = "https://github.com/MedVisBonn/eyelab/"
         msgBox = QMessageBox()
         msgBox.setWindowTitle("About")
-        msgBox.setText(f"<h1>EyeLab v{version}<\h1>")
+        msgBox.setText(f"<h1>EyeLab v{version}</h1>")
         msgBox.setInformativeText(
             f"<b>Repository:</b> <p> <a href='{repository}'>{repository}</a> </p>"
             f"<b>Contact:</b> <p> Olivier Morelle <br> oli4morelle@gmail.com </p>"
@@ -196,7 +195,7 @@ class eyelab(QtWidgets.QMainWindow, Ui_MainWindow):
             return str(Path.home())
 
     def import_data(self, method, format):
-        if not self.workspace.data is None:
+        if self.workspace.data is not None:
             message = "The import replaces all data you have in your workspace. Do you want to proceed?"
             ret = QMessageBox.question(
                 self, "EyeLab", message, QMessageBox.Ok | QMessageBox.Cancel

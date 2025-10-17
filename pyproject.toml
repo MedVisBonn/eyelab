@@ -3,23 +3,25 @@ name = "eyelab"
 version = "0.4.2"
 description = "Multi-modal annotation tool for eye imaging data"
 authors = [{ name = "Olivier Morelle", email = "oli4morelle@gmail.com" }]
-requires-python = ">=3.8,<3.10"
+requires-python = ">=3.12"
 license = "MIT"
 dependencies = [
-    "qimage2ndarray==1.9.0",
-    "requests>=2.27.1,<3",
-    "PySide6==6.1.3",
-    "numpy>=1.22",
-    "eyepy>=0.12.1",
+    "eyepy>=0.15.0",
+    "pyside6>=6.10.0",
+    "qimage2ndarray>=1.10.0",
+    "requests>=2.32.5",
 ]
+
+[project.scripts]
+eyelab = "eyelab.main:main"
 
 [dependency-groups]
 dev = [
-    "pyinstaller~=4.8",
-    "pytest>=6.2.5,<7",
-    "pytest-cov>=3.0.0,<4",
-    "pre-commit>=2.17.0,<3",
-    "commitizen>=2.20.4,<3",
+    "commitizen>=4.9.1",
+    "pre-commit>=4.3.0",
+    "pyinstaller>=6.16.0",
+    "pytest>=8.4.2",
+    "pytest-cov>=7.0.0",
 ]
 
 [build-system]
