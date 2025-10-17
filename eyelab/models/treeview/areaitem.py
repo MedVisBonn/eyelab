@@ -9,7 +9,7 @@ from eyelab.models.treeview.itemgroup import ItemGroup
 class AreaItem(QtWidgets.QGraphicsPixmapItem):
     def __init__(
         self,
-        data: ep.EyeVolumeVoxelAnnotation,
+        data: ep.EyeVolumePixelAnnotation,
         index: int = None,
         parent: ItemGroup = None,
     ):

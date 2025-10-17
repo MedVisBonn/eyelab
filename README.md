@@ -121,13 +121,13 @@ ev = ep.EyeVolume.load("path/to/file.eye")
 
 # Development
 
-Clone the repository, install python poetry and run `poetry install` after navigating into the project folder.
+Clone the repository, install `uv` and run `uv sync` after navigating into the project folder.
 
-To run EyeLab run `poetry run eyelab/main.py`
+To run EyeLab run `uv run eyelab/main.py`
 ## Building the Windows executable
 
 ```shell
-poetry runpyinstaller --hidden-import imagecodecs --collect-submodules imagecodecs --name EyeLab -i icon.ico eyelab\main.py --onefile
+uv run pyinstaller --hidden-import imagecodecs --collect-submodules imagecodecs --name EyeLab -i icon.ico eyelab/main.py --onefile
 ```
 
 # Related Projects:
