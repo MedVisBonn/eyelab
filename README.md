@@ -8,6 +8,7 @@ EyeLab is a multimodal annotation tool for ophthalmological imaging data.
 ![EyeLab](docs/EyeLab.png)
 
 ## Getting Started
+
 If you are on Windows, download the latest executable [here](https://github.com/MedVisBonn/eyelab/releases/latest/download/EyeLab-v0.4.2.exe) and double click it to start EyeLab.
 
 For Linux there is no package, but you might want to have a look at the Developers section for how to set up EyeLab.
@@ -16,17 +17,15 @@ For Linux there is no package, but you might want to have a look at the Develope
 
 Use the File Menu on the top left of the EyeLab window to import, save or open data to your workspace.
 
-
 #### Supported Formats
 
-+ Data exported from HEXEX in the .xml or .vol format
-+ Data from the RETOUCH challenge
-+ AMD and Control Dataset from  (Farsiu 2014)
+- Data exported from HEXEX in the .xml or .vol format
+- Data from the RETOUCH challenge
+- AMD and Control Dataset from (Farsiu 2014)
 
 You can also import B-scans from a folder (sorting the file names is expected to result in the correct B-scan order)
 
 Annotations can be saved as .eye files, [EyeLabs file format](###-the-.eye-format).
-
 
 ### The Workspace:
 
@@ -84,9 +83,10 @@ If you want to pan around in the image select the **Inspection** tool on the rig
 The layer heights are constantly updated to represent the position of the current cubic
 spline curve.
 
-
 ### The .eye format
+
 .eye files are zip archives of the following structure:
+
 ```
 file.eye
 │   meta.json
@@ -113,7 +113,6 @@ file.eye
 
 Since Eyelab builds on the eyepy Python package, annotations stored by Eyelab in the .eye formt can be easily loaded with eyepy:
 
-
 ```python
 import eyepy as ep
 ev = ep.EyeVolume.load("path/to/file.eye")
@@ -123,7 +122,8 @@ ev = ep.EyeVolume.load("path/to/file.eye")
 
 Clone the repository, install python poetry and run `poetry install` after navigating into the project folder.
 
-To run EyeLab run `poetry run eyelab/main.py`
+To run EyeLab run `poetry run python eyelab/main.py`
+
 ## Building the Windows executable
 
 ```shell
@@ -132,5 +132,5 @@ poetry runpyinstaller --hidden-import imagecodecs --collect-submodules imagecode
 
 # Related Projects:
 
-+ [eyepie](https://github.com/MedVisBonn/eyepy): The Python package EyeLab uses in the back
-+ [OCT-Converter](https://github.com/marksgraham/OCT-Converter): Extract raw optical coherence tomography (OCT) and fundus data from proprietary file formats. (.fds/.fda/.e2e/.img/.oct/.dcm)
+- [eyepie](https://github.com/MedVisBonn/eyepy): The Python package EyeLab uses in the back
+- [OCT-Converter](https://github.com/marksgraham/OCT-Converter): Extract raw optical coherence tomography (OCT) and fundus data from proprietary file formats. (.fds/.fda/.e2e/.img/.oct/.dcm)
