@@ -29,7 +29,7 @@ from eyelab.views.workspace import Workspace
 class eyelab(QtWidgets.QMainWindow, Ui_MainWindow):
     """Create the main window that stores all of the widgets necessary for the application."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, load_test_file=False):
         """Initialize the components of the main window."""
         super().__init__(parent)
         self.setupUi(self)
@@ -90,14 +90,17 @@ class eyelab(QtWidgets.QMainWindow, Ui_MainWindow):
         # hide options for loading/saving annotations only
         self.menuAnnotations.deleteLater()
 
-        # from eyepy.data import load
-
-        # ev = load("drusen_patient")
-        # ev.add_voxel_annotation(
-        #    ep.drusen(ev.layers["RPE"], ev.layers["BM"], ev.shape), name="Drusen"
-        # )
-        # self.workspace.set_data(ev)
-        # self.statusBar().showMessage("Ready")
+        # Load test data for fast development/testing
+        if load_test_file:
+            try:
+                self.statusBar().showMessage("Loading test data...")
+                ev = ep.data.load("drusen_patient")
+                self.workspace.set_data(ev)
+                get_undo_stack("main").clear()
+                self.statusBar().showMessage("Test data loaded", 2000)
+            except Exception as e:
+                logging.error(f"Failed to load test data: {e}")
+                self.statusBar().showMessage("Failed to load test data", 2000)
 
     def setWindowModified(self, value: bool) -> None:
         super().setWindowModified(value)
@@ -282,6 +285,12 @@ class eyelab(QtWidgets.QMainWindow, Ui_MainWindow):
 
 
 def main(log_level=logging.DEBUG):
+    # Parse command-line arguments if not explicitly provided
+    load_test_file = "--dev" in sys.argv
+    # Remove our custom arguments before passing to QApplication
+    if load_test_file:
+        sys.argv.remove("--dev")
+
     # create logger for "oat" application
     logger = logging.getLogger("eyelab")
     logger.setLevel(logging.DEBUG)
@@ -306,7 +315,7 @@ def main(log_level=logging.DEBUG):
 
     application = QtWidgets.QApplication(sys.argv)
 
-    window = eyelab()
+    window = eyelab(load_test_file=load_test_file)
     # desktop = QtGui.QScreen().availableGeometry()
     # width = (desktop.width() - window.width()) / 2
     # height = (desktop.height() - window.height()) / 2
