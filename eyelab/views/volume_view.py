@@ -125,14 +125,17 @@ class VolumeView(CustomGraphicsView):
         # Todo: Make this faster for smooth registered navigation
         point = Point(pos.x(), pos.y())
 
-        smallest_dist = self.point_line_distance(point, self.slice_lines[0])
+        smallest_dist = float("inf")
+        closest_idx = 0
         for i, line in enumerate(self.slice_lines):
             dist = self.point_line_distance(point, line)
-            if dist <= smallest_dist:
+            if dist < smallest_dist:
                 smallest_dist = dist
+                closest_idx = i
             else:
-                return i - 1
-        return i
+                # Since lines are ordered, we can stop searching once distance increases
+                break
+        return closest_idx
 
     @staticmethod
     def point_line_distance(point, line):

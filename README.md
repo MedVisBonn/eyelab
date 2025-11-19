@@ -123,7 +123,9 @@ ev = ep.EyeVolume.load("path/to/file.eye")
 
 Clone the repository, install `uv` and run `uv sync` after navigating into the project folder.
 
-To run EyeLab run `uv run eyelab/main.py`
+To run EyeLab run `uv run eyelab`
+
+If you want to run EyeLab for testing with a volume already loaded, run `uv run eyelab --dev`
 ## Building the Windows executable
 
 ```shell

@@ -1,10 +1,11 @@
 import logging
 from itertools import groupby
 from typing import Any, Dict, List, Tuple
+import bisect
 
 import eyepy as ep
 import numpy as np
-from PySide6.QtCore import QLineF, QPoint, QPointF, QRectF, Qt
+from PySide6.QtCore import QLineF, QPoint, QPointF, QRectF, Qt, QTimer
 from PySide6.QtGui import QColor, QFocusEvent, QKeyEvent, QPainterPath, QPen, QPolygonF
 from PySide6.QtWidgets import (
     QApplication,
@@ -24,7 +25,6 @@ from eyelab.commands.layeritem import (
     DeleteCurve,
     DeletePolygon,
     MoveControlKnot,
-    MoveKnot,
 )
 from eyelab.models.treeview.itemgroup import ItemGroup
 
@@ -148,7 +148,7 @@ class CubicSplineKnotItem(QGraphicsEllipseItem):
 
     @property
     def layer_item(self) -> "LayerItem":
-        return self.parentItem().layer_item
+        return self.parentItem().parentItem()
 
     def as_tuple(self):
         center = self.center
@@ -270,49 +270,185 @@ class CubicSplineKnotItem(QGraphicsEllipseItem):
 
     def mousePressEvent(self, event: QGraphicsSceneMouseEvent) -> None:
         if event.buttons() & Qt.RightButton:
-            command = layer_commands.DeleteKnot(self)
-            get_undo_stack("main").push(command)
+            self.layer_item._delete_knot_macro(self)
             event.accept()
             return
-        super().mousePressEvent(event)
+        self.parentItem().parentItem().active_curve = self.parentItem()
+        event.accept()
 
     def mouseMoveEvent(self, event: QGraphicsSceneMouseEvent) -> None:
-        index = self.bspline.knots.index(self)
-        left_knot = self.bspline.knots[index - 1].center.x() if index > 0 else 0
-        right_knot = (
-            self.bspline.knots[index + 1].center.x()
-            if index + 1 < len(self.bspline.knots)
-            else self.scene().shape[1]
-        )
+        # Make sure knot does not cross neighboring knots in same spline
+        knot_index = self.bspline.knots.index(self)
+        spline_index = self.layer_item.cubic_splines.index(self.bspline)
 
-        index = self.layer_item.cubic_splines.index(self.bspline)
-        if index > 0 and left_knot == 0:
-            left_knot = self.layer_item.cubic_splines[index - 1].knots[-1].center.x()
-        if (
-            index + 1 < len(self.layer_item.cubic_splines)
-            and right_knot == self.scene().shape[1]
-        ):
-            right_knot = self.layer_item.cubic_splines[index + 1].knots[0].center.x()
+        if knot_index > 0:
+            left_barrier = self.bspline.knots[knot_index - 1].center.x()
+        else:
+            if spline_index > 0:
+                left_barrier = (
+                    self.layer_item.cubic_splines[spline_index - 1].knots[-1].center.x()
+                )
+            else:
+                left_barrier = 0
 
-        if left_knot < event.scenePos().x() < right_knot:
-            command = MoveKnot(self, event.scenePos())
-            get_undo_stack("main").push(command)
+        if knot_index + 1 < len(self.bspline.knots):
+            right_barrier = self.bspline.knots[knot_index + 1].center.x()
+        else:
+            if spline_index + 1 < len(self.layer_item.cubic_splines):
+                right_barrier = (
+                    self.layer_item.cubic_splines[spline_index + 1].knots[0].center.x()
+                )
+            else:
+                right_barrier = self.scene().shape[1]
+
+        # Make sure event x-pos is within barriers by setting it
+        event_pos = event.scenePos()
+        if event_pos.x() < left_barrier:
+            event_pos.setX(left_barrier)
+        elif event_pos.x() > right_barrier:
+            event_pos.setX(right_barrier)
+
+        self._move_knot_macro(event_pos)
         event.accept()
-        # super().mouseMoveEvent(event)
 
     def keyPressEvent(self, event: QKeyEvent) -> None:
         # modifiers = QApplication.keyboardModifiers()
         if event.key() == Qt.Key_Delete:
-            spline = self.parentItem()
-            knot = self
-            command = layer_commands.DeleteKnot(knot)
-            get_undo_stack("main").push(command)
+            self.layer_item._delete_knot_macro(self)
             event.accept()
             return
         super().keyPressEvent(event)
 
+    def _move_knot_macro(self, new_pos: QPointF):
+        """Macro for moving a knot - used to group multiple MoveKnot commands"""
+        old_pos = self.center
+        left_neighbours, right_neighbours = self.layer_item.get_neighbour_polygons(
+            self.bspline
+        )
+
+        stack = get_undo_stack("main")
+        stack.beginMacro("Move Knot")
+        stack.push(layer_commands.MoveKnot(self, new_pos))
+        stack.push(layer_commands.OptimizeControlPoints(self))
+        # If not first knot optimize knot before
+        if self.bspline.knots.index(self) > 0:
+            previous_knot = self.bspline.knots[self.bspline.knots.index(self) - 1]
+            stack.push(layer_commands.OptimizeControlPoints(previous_knot))
+        # I fnot last knot optimize knot after
+        if self.bspline.knots.index(self) + 1 < len(self.bspline.knots):
+            next_knot = self.bspline.knots[self.bspline.knots.index(self) + 1]
+            stack.push(layer_commands.OptimizeControlPoints(next_knot))
+
+        # if knot is first or last in curve, update/remove neighboring polygons
+        if self is self.bspline.knots[-1]:
+            if right_neighbours:
+                if new_pos.x() > old_pos.x():
+                    for n in right_neighbours:
+                        # Find the closest neighbour that is not covered after the move
+                        if n.end.x() <= new_pos.x():
+                            # Delete polygon if it is covered, do not set heights to nan since the curve already covers it
+                            stack.push(
+                                layer_commands.DeletePolygon(n, heights_to_nan=False)
+                            )
+                        elif n.end.x() > new_pos.x() and n.start.x() < new_pos.x():
+                            # Change the neighbour if the new pos is in its region
+                            stack.push(layer_commands.ChangePolygon(n, start=new_pos))
+                            break
+                        elif new_pos.x() < n.start.x():
+                            break
+
+                elif new_pos.x() < old_pos.x():
+                    # If the curve shrinks (rightmost knot moves left)
+                    if int(right_neighbours[0].start.x()) == int(old_pos.x()):
+                        # Disconnect neighbour polygon
+                        new_start = QPointF(
+                            old_pos.x() + 1,
+                            self.layer_item.height_map[int(old_pos.x() + 1)],
+                        )
+                        stack.push(
+                            layer_commands.ChangePolygon(
+                                right_neighbours[0], start=new_start
+                            )
+                        )
+                    # Set the heights of the uncovered region to nan
+                    stack.push(
+                        layer_commands.ClearHeights(
+                            layeritem=self.layer_item,
+                            start=new_pos.x() + 1,
+                            end=old_pos.x() + 1,
+                        )
+                    )
+            else:
+                # No right neighbours, just clear heights
+                if new_pos.x() < old_pos.x():
+                    stack.push(
+                        layer_commands.ClearHeights(
+                            layeritem=self.layer_item,
+                            start=new_pos.x() + 1,
+                            end=old_pos.x() + 1,
+                        )
+                    )
+
+        if self is self.bspline.knots[0]:
+            if left_neighbours:
+                if new_pos.x() < old_pos.x():
+                    for n in left_neighbours:
+                        # Find the closest neighbour that is not covered after the move
+                        if n.start.x() >= new_pos.x():
+                            # Delete polygon if it is covered, do not set heights to nan since the curve already covers it
+                            stack.push(
+                                layer_commands.DeletePolygon(n, heights_to_nan=False)
+                            )
+                        elif n.start.x() < new_pos.x() and n.end.x() > new_pos.x():
+                            # Change the neighbour if the new pos is in its region
+                            stack.push(layer_commands.ChangePolygon(n, end=new_pos))
+                            break
+                        elif new_pos.x() > n.end.x():
+                            break
+
+                elif new_pos.x() > old_pos.x():
+                    # If the curve shrinks (leftmost knot moves right)
+                    # Set the heights of the uncovered region to nan
+                    if int(left_neighbours[0].end.x()) == int(old_pos.x()):
+                        # Disconnect neighbour polygon
+                        new_end = QPointF(
+                            old_pos.x() - 1,
+                            self.layer_item.height_map[int(old_pos.x() - 1)],
+                        )
+                        stack.push(
+                            layer_commands.ChangePolygon(
+                                left_neighbours[0], end=new_end
+                            )
+                        )
+                    stack.push(
+                        layer_commands.ClearHeights(
+                            layeritem=self.layer_item,
+                            start=old_pos.x(),
+                            end=new_pos.x(),
+                        )
+                    )
+
+            else:
+                # No left neighbours, just clear heights
+                if new_pos.x() > old_pos.x():
+                    stack.push(
+                        layer_commands.ClearHeights(
+                            layeritem=self.layer_item,
+                            start=old_pos.x(),
+                            end=new_pos.x(),
+                        )
+                    )
+        stack.push(layer_commands.UpdateLayerArray(self.bspline))
+        stack.endMacro()
+
 
 class CubicSpline(QGraphicsPathItem):
+    """Editable cubic Bezier spline curve for layer manipulation.
+
+    Consists of knots (CubicSplineKnotItem) with control points.
+    Covers a region of the height map from first to last knot.
+    """
+
     def __init__(self, knots: List[dict], parent: "LayerItem"):
         super().__init__(parent=parent)
         self._knots = knots
@@ -326,10 +462,11 @@ class CubicSpline(QGraphicsPathItem):
         self.hide_knots()
 
         self.setAcceptHoverEvents(True)
-
         self.setFlag(QGraphicsItem.ItemIsFocusable)
         self.setFlag(QGraphicsItem.ItemIsSelectable)
-        self.update()
+
+    def setParentItem(self, parent: "LayerItem") -> None:
+        super().setParentItem(parent)
 
     @property
     def start(self) -> QPointF:
@@ -385,19 +522,21 @@ class CubicSpline(QGraphicsPathItem):
         self.control_points_visible = True
 
     def indices(self):
-        self.update()
         # Older versions of EyeLab did not set all knots to x.5
         # Add or subtract 0.5 before determining start and end of  the indices
         # to make sure that start and end are in the correct range - no
         # out of bounds error by interpolator
-        start = np.floor(self.start.x() + 0.499).astype(int)
+
+        start = np.ceil(self.start.x() - 0.5).astype(int)
         end = np.floor(self.end.x() - 0.5).astype(int)
+
         if start == end:
             return {start: self.start.y()}
 
         n_points = end - start + 1
         x_indices = []
         y_indices = []
+        self.setPath(self._build_path())
         for t in np.linspace(0, 1, n_points * 2):
             point = self.path().pointAtPercent(t)
             x_indices.append(point.x())
@@ -527,6 +666,7 @@ class CubicSpline(QGraphicsPathItem):
         super().hoverLeaveEvent(event)
 
     def mousePressEvent(self, event: QGraphicsSceneMouseEvent) -> None:
+        self.layer_item.active_curve = self
         super().mousePressEvent(event)
 
     def focusInEvent(self, event: QFocusEvent) -> None:
@@ -551,20 +691,29 @@ class CubicSpline(QGraphicsPathItem):
 
 
 class PolygonPath(QGraphicsPathItem):
-    def __init__(self, parent, heights, start: QPointF = None, end: QPointF = None):
+    """Non-editable path showing height_map regions NOT covered by cubic splines.
+
+    Auto-generated from height_map data. Start/end points connect to
+    neighboring curve knots. Updated when curves are added/removed/moved.
+    """
+
+    def __init__(self, parent: "LayerItem", start: QPointF = None, end: QPointF = None):
         super().__init__(parent)
-        self.heights = heights
+        if parent:
+            self.heights = parent.height_map
         self._start = start
         self._end = end
 
         # self.setAcceptHoverEvents(True)
         # self.setFlag(QGraphicsItem.ItemIsFocusable)
-        self.update()
+        # self.update()
+
+    def setParentItem(self, parent: QGraphicsItem) -> None:
+        self.heights = parent.height_map
+        super().setParentItem(parent)
 
     def mousePressEvent(self, event: QGraphicsSceneMouseEvent) -> None:
-        # print(self.layer_item.focusItem())
         super().mousePressEvent(event)
-        # print(self.layer_item.focusItem())
 
     def shape(self) -> QPainterPath:
         # Create a path which closes without increasing its "area"
@@ -690,6 +839,26 @@ class PolygonPath(QGraphicsPathItem):
 
 
 class LayerItem(QGraphicsPathItem):
+    """Graphics item representing a layer annotation for one B-scan slice.
+
+    Architecture:
+    - Height map (annotation_data.data[index]) is the PRIMARY data source
+    - Cubic splines provide editable curves for manipulation
+    - Polygons fill gaps between curves (auto-generated from height_map)
+
+    Data Flow:
+    1. User edits knots/curves
+    2. Commands update height_map immediately (via UpdateLayerArray)
+    3. Polygons read from height_map and connect to curve endpoints
+    4. All changes are undo/redo-able via QUndoCommand system
+
+    Key Invariants:
+    - Height map always reflects current curve state
+    - Knots are at pixel centers (x = floor(x) + 0.5)
+    - Curves are sorted by x-position
+    - Polygons fill non-curve regions of height_map
+    """
+
     def __init__(
         self, data: ep.EyeVolumeLayerAnnotation, index: int, parent: ItemGroup
     ):
@@ -697,27 +866,42 @@ class LayerItem(QGraphicsPathItem):
         self.annotation_data = data
         self.index = index
 
+        # Keep track of the currently active curve (for adding knots)
+        self.active_curve = None
+
         # Make sure knots are List[Curve[KnotDict]] and not List[KnotDict]
         knots = self.annotation_data.knots[self.index]
         if knots:
-            if type(knots[0]) == dict:
+            if isinstance(knots[0], dict):
                 self.annotation_data.knots[self.index] = [
                     sorted(knots, key=lambda x: x["knot_pos"][0])
                 ]
+
+        # Create cubic splines first
         self.cubic_splines = [CubicSpline(knots, self) for knots in self.knots]
+
+        # Create polygons from height_map regions NOT covered by curves
+        # This must happen AFTER curves are created so we know which regions to exclude
         self.polygons = self._get_polygons()
 
         self.setFlag(QGraphicsItem.ItemIsPanel)
         self.setFlag(QGraphicsItem.ItemIsFocusable)
         self.setFlag(QGraphicsItem.ItemIsSelectable)
 
+        # Connect polygon endpoints to neighboring curve knots
+        # This must happen AFTER both curves and polygons are created
         for cs in self.cubic_splines:
             left, right = self.get_neighbour_elements(cs)
-            if left and type(left) is PolygonPath:
+            if left and isinstance(left, PolygonPath):
                 left.end = cs.start
-            if right and type(right) is PolygonPath:
+            if right and isinstance(right, PolygonPath):
                 right.start = cs.end
+
         self.update()
+
+        self._single_click_timer = QTimer(None, singleShot=True)
+        self._single_click_timer.setSingleShot(True)
+        self._single_click_timer.timeout.connect(self._handle_single_click_timeout)
 
     def get_neighbour_elements(self, layer_element):
         elements = sorted(self.cubic_splines + self.polygons, key=lambda x: x.start.x())
@@ -737,6 +921,8 @@ class LayerItem(QGraphicsPathItem):
             self.polygons + [layer_element], key=lambda x: (x.start.x(), x.end.x())
         )
         index = elements.index(layer_element)
+        print(index, [(e.start.x(), e.end.x()) for e in elements])
+        # print(elements[:index][::-1], elements[index + 1 :])
         return elements[:index][::-1], elements[index + 1 :]
 
     @property
@@ -761,24 +947,74 @@ class LayerItem(QGraphicsPathItem):
         polygon_regions = []
 
         for k, g in groupby(layer_copy):
-            l = len(list(g))
+            gl = len(list(g))
             if k:
                 polygon_regions.append(
                     (
                         QPointF(i + 0.5, self.height_map[i]),
-                        QPointF(i + l - 0.5, self.height_map[i + l - 1]),
+                        QPointF(i + gl - 0.5, self.height_map[i + gl - 1]),
                     )
                 )
-            i += l
+            i += gl
 
-        return [self._get_polygon(start, end) for start, end in polygon_regions]
-
-    def _get_polygon(self, start: QPointF, end: QPointF) -> PolygonPath:
-        return PolygonPath(self, self.height_map, start, end)
+        return [PolygonPath(self, start, end) for start, end in polygon_regions]
 
     @property
     def height_map(self):
-        return self.annotation_data.data[-(self.index + 1)]
+        return self.annotation_data.data[self.index]
+
+    def validate_state(self, context: str = "") -> bool:
+        """Validate that height_map and curve/polygon state are consistent.
+
+        Useful for debugging. Call after major operations to catch bugs early.
+        Returns True if valid, False otherwise (logs errors).
+        """
+        issues = []
+
+        # Check that curves are sorted by x position
+        for i in range(len(self.cubic_splines) - 1):
+            if self.cubic_splines[i].end.x() >= self.cubic_splines[i + 1].start.x():
+                issues.append(
+                    f"Curves overlap or out of order: curve {i} ends at {self.cubic_splines[i].end.x()}, curve {i+1} starts at {self.cubic_splines[i+1].start.x()}"
+                )
+
+        # Check that polygons are sorted by x position
+        for i in range(len(self.polygons) - 1):
+            if self.polygons[i].end.x() >= self.polygons[i + 1].start.x():
+                issues.append(
+                    f"Polygons overlap or out of order: polygon {i} ends at {self.polygons[i].end.x()}, polygon {i+1} starts at {self.polygons[i+1].start.x()}"
+                )
+
+        # Check that knot x-positions are at pixel centers (x.5)
+        for i, cs in enumerate(self.cubic_splines):
+            for j, knot in enumerate(cs.knots):
+                x = knot.center.x()
+                if abs(x - (np.floor(x) + 0.5)) > 0.01:
+                    issues.append(
+                        f"Curve {i} knot {j} x-position not at pixel center: {x}"
+                    )
+
+        # Check that curve regions in height_map are not NaN
+        for i, cs in enumerate(self.cubic_splines):
+            start_x = int(np.floor(cs.start.x()))
+            end_x = int(np.ceil(cs.end.x()))
+            if end_x > start_x:
+                curve_heights = self.height_map[start_x:end_x]
+                nan_count = np.isnan(curve_heights).sum()
+                if nan_count > 0:
+                    issues.append(
+                        f"Curve {i} region [{start_x}:{end_x}] has {nan_count} NaN values in height_map"
+                    )
+
+        if issues:
+            logger.error(
+                f"LayerItem validation failed{' at ' + context if context else ''}:"
+            )
+            for issue in issues:
+                logger.error(f"  - {issue}")
+            return False
+
+        return True
 
     def setActive(self, active: bool) -> None:
         if active:
@@ -790,29 +1026,6 @@ class LayerItem(QGraphicsPathItem):
                 cs.hide_knots()
                 # cs.hide_control_points()
         super().setActive(active)
-
-    def as_array(self):
-        """Return the annotated path as an array of shape (image width)
-
-        The array has the same shape as the annotated image width. Regions
-        which are not annotated become np.nan
-
-        The array is build by painting the annotated path on a pixmap,
-        converting it to a numpy array and computing the column-wise center of
-        mass for the first channel.
-        """
-        heights = self.annotation_data.data[-(self.index + 1)]
-
-        spline_region = self.cubic_spline.x_region
-        width = spline_region[1] - spline_region[0]
-
-        for t in np.linspace(0, 1, np.ceil(width).astype(int), endpoint=False):
-            path = self.path()
-            point = path.pointAtPercent(t)
-            x = np.rint(point.x() - 0.5).astype(int)
-            heights[x] = point.y() - 0.5
-
-        return heights
 
     def update(self):
         self.setVisible(self.annotation_data.meta["visible"])
@@ -834,21 +1047,40 @@ class LayerItem(QGraphicsPathItem):
             p.setPen(pen)
             p.update()
 
-        # x, y = self.cubic_spline.indices
-        # self.annotation_data.data[-(self.index + 1), x] = y
         super().update()
 
     def view(self):
         return self.scene().views()[0]
 
-    def mouseDoubleClickEvent(self, event):
-        modifiers = QApplication.keyboardModifiers()
-        if modifiers == Qt.ControlModifier:
-            print(self.polygons, self.cubic_splines)
-            event.ignore()
-            return
-        # if event.modifiers() &
+    def mousePressEvent(self, event: QGraphicsSceneMouseEvent) -> None:
+        # Only start timer if there is no CubicSpline or CubicSplineKnotItem at the position
         pos = event.scenePos()
+
+        # Check if there's a curve or knot at the click position
+        items_at_pos = self.scene().items(pos)
+        has_curve_or_knot = any(
+            isinstance(item, (CubicSpline, CubicSplineKnotItem))
+            for item in items_at_pos
+        )
+
+        interval = QApplication.doubleClickInterval()
+        if not has_curve_or_knot and not self._single_click_timer.isActive():
+            self._single_click_timer.start(interval)
+
+        super().mousePressEvent(event)
+
+    def _handle_single_click_timeout(self):
+        """Handle single-click after timeout to set active curve."""
+        logger.debug("Reset active curve")
+        self.active_curve = None
+
+    def mouseDoubleClickEvent(self, event):
+        """Handle double-click to add knots or curves."""
+        if self._single_click_timer.isActive():
+            self._single_click_timer.stop()
+
+        pos = event.scenePos()
+
         # Ignore event if not inside the scene
         if not self.scene().sceneRect().contains(pos):
             event.ignore()
@@ -858,19 +1090,14 @@ class LayerItem(QGraphicsPathItem):
         cs = [cs for cs in self.cubic_splines if pos in cs]
         # if pos is in any existing curve add the knot to this curve
         if cs:
-            command = layer_commands.AddKnot(cs[0], pos)
-        elif type(self.focusItem()) == LayerItem or self.focusItem() is None:
-            command = layer_commands.AddCurve(self, event.scenePos())
-        # else if there is a focusitem add the knot to this items curve
+            self._add_knot_macro(cs[0], pos)
+        # else if there is no active curve, create a new curve
+        elif self.active_curve is None:
+            self._add_curve_macro(pos)
+        # else if there is an active curve add the knot to this curve
         else:
-            if type(self.focusItem()) is CubicSpline:
-                bspline = self.focusItem()
-            elif type(self.focusItem()) is CubicSplineKnotItem:
-                bspline = self.focusItem().bspline
-            else:
-                print("unexpected focus item ", self.focusItem())
-                return
-            # Ignore event if there is other curve in between focusItem and new knot
+            bspline = self.active_curve
+            # New Curve if there is other curve in between active curve and new knot
             if any(
                 [
                     pos.x() < cs.start.x() < bspline.start.x()
@@ -878,11 +1105,110 @@ class LayerItem(QGraphicsPathItem):
                     for cs in self.cubic_splines
                 ]
             ):
-                return
-            command = layer_commands.AddKnot(bspline, pos)
+                self._add_curve_macro(pos)
+            else:
+                self._add_knot_macro(bspline, pos)
 
-        get_undo_stack("main").push(command)
-        super().mouseDoubleClickEvent(event)
+        # Accept event instead of super().. to prevent second mousePressEvent
+        event.accept()
+
+    def _add_curve_macro(self, pos: QPointF):
+        stack = get_undo_stack("main")
+        stack.beginMacro("Add Curve")
+        stack.push(layer_commands.AddCurve(self, pos))
+
+        # Split polygon if new Curve lies in it.
+        polygon = [p for p in self.polygons if pos in p]
+        if polygon:
+            polygon = polygon[0]
+            stack.push(layer_commands.SplitPolygons(polygon, pos))
+        stack.endMacro()
+
+    def _add_knot_macro(self, bspline, pos: QPointF):
+        stack = get_undo_stack("main")
+        stack.beginMacro("Add Knot")
+        stack.push(layer_commands.AddKnot(bspline, pos))
+
+        # Optimize control points of neighbouring knots
+        if len(bspline.knots) > 2:
+            right_index = (
+                bisect.bisect_left(bspline.knots, pos.x(), key=lambda x: x.center.x())
+                + 1
+            )
+            if right_index < len(bspline.knots):
+                stack.push(
+                    layer_commands.OptimizeControlPoints(bspline.knots[right_index])
+                )
+            left_index = right_index - 2
+            if left_index >= 0:
+                stack.push(
+                    layer_commands.OptimizeControlPoints(bspline.knots[left_index])
+                )
+
+        # Create child commands to change neighbouring polygons if necessary
+        left_neighbours, right_neighbours = self.get_neighbour_polygons(bspline)
+        for n in right_neighbours:
+            if pos in n:
+                stack.push(layer_commands.ChangePolygon(n, start=pos))
+                break
+            elif pos.x() < n.start.x():
+                break
+            else:
+                stack.push(layer_commands.DeletePolygon(n))
+
+        for n in left_neighbours:
+            if pos in n:
+                stack.push(layer_commands.ChangePolygon(n, end=pos))
+                break
+            elif pos.x() > n.end.x():
+                break
+            else:
+                stack.push(layer_commands.DeletePolygon(n))
+
+        stack.push(layer_commands.UpdateLayerArray(bspline))
+        stack.endMacro()
+
+    def _delete_knot_macro(self, knot: CubicSplineKnotItem):
+        stack = get_undo_stack("main")
+        stack.beginMacro("Delete Knot")
+
+        bspline = knot.bspline
+
+        left_neighbours, right_neighbours = self.get_neighbour_polygons(bspline)
+        # Run DeleteCurve if last knot is removed
+        if len(bspline.knots) == 1:
+            stack.push(layer_commands.DeleteCurve(bspline))
+            if left_neighbours and right_neighbours:
+                stack.push(
+                    layer_commands.JoinPolygons(left_neighbours[0], right_neighbours[0])
+                )
+        else:
+            is_fist = knot is knot.bspline.knots[0]
+            is_last = knot is knot.bspline.knots[-1]
+
+            stack.push(layer_commands.DeleteKnot(knot))
+            for k in bspline.knots:
+                stack.push(layer_commands.OptimizeControlPoints(k))
+
+            if is_fist and left_neighbours and left_neighbours[0].end == knot.center:
+                stack.push(
+                    layer_commands.ChangePolygon(
+                        left_neighbours[0], end=bspline.knots[1].center
+                    )
+                )
+            elif (
+                is_last
+                and right_neighbours
+                and right_neighbours[0].start == knot.center
+            ):
+                stack.push(
+                    layer_commands.ChangePolygon(
+                        right_neighbours[0], start=bspline.knots[-2].center
+                    )
+                )
+
+        stack.push(layer_commands.UpdateLayerArray(bspline))
+        stack.endMacro()
 
     def childNumber(self):
         if self.parentItem():
@@ -910,7 +1236,7 @@ class LayerItem(QGraphicsPathItem):
             return True
         return False
 
-    def appendChild(self, data: "TreeLineItem"):
+    def appendChild(self, data):
         items = self.childItems()
 
         if items:

@@ -81,24 +81,30 @@ class CustomGraphicsScene(QtWidgets.QGraphicsScene):
         # item.mouseMoveEvent(event)
         super().mouseMoveEvent(event)
 
-    def mousePressEvent(self, event: "QGraphicsSceneMouseEvent") -> None:
+    def mousePressEvent(self, event: QtWidgets.QGraphicsSceneMouseEvent) -> None:
         # Do not handle the event in ScrollHandDrag Mode to not interfere
         if self.views()[0].dragMode() == QtWidgets.QGraphicsView.ScrollHandDrag:
             return
         if event.button() == Qt.RightButton:
             self.activePanel().setFocus(Qt.OtherFocusReason)
             self.clearSelection()
+
+        item = self.activePanel()
+        if item:
+            item.mousePressEvent(event)
         super().mousePressEvent(event)
 
-    def mouseReleaseEvent(self, event: "QGraphicsSceneMouseEvent") -> None:
+    def mouseReleaseEvent(self, event: QtWidgets.QGraphicsSceneMouseEvent) -> None:
         if self.views()[0].dragMode() == QtWidgets.QGraphicsView.ScrollHandDrag:
             return
         super().mouseReleaseEvent(event)
 
     def mouseDoubleClickEvent(self, event: QtGui.QMouseEvent) -> None:
         item = self.activePanel()
-        item.mouseDoubleClickEvent(event)
-        super().mouseDoubleClickEvent(event)
+        # Check if there is an active panel (layer or area)
+        if item:
+            item.mouseDoubleClickEvent(event)
+            # super().mouseDoubleClickEvent(event)
 
     def contextMenuEvent(self, event: QGraphicsSceneContextMenuEvent) -> None:
         # item = self.activePanel()

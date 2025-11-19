@@ -1,37 +1,255 @@
 import logging
+import bisect
 
 import numpy as np
-from PySide6.QtCore import QLineF, QPointF, Qt
+from PySide6.QtCore import QLineF, QPointF
 from PySide6.QtGui import QUndoCommand
 from PySide6.QtWidgets import QGraphicsItem
 
 from eyelab.models.treeview import layeritem
+from eyelab.models.treeview import itemmodel
+import eyepy as ep
 
 logger = logging.getLogger(__name__)
 
 
 class AddLayeritem(QUndoCommand):
-    def __init__(self, parent=None):
+    def __init__(
+        self,
+        tree_item_model: "itemmodel.VolumeTreeItemModel",
+        name="New Layer",
+        color="default",
+        parent=None,
+    ):
         super().__init__(parent)
         self.setText("Add Layer")
+        self.model = tree_item_model
+        self.volume = self.model._data
+
+        height_map = np.full((self.volume.shape[1:]), np.nan)
+        self.layer_annotation = ep.EyeVolumeLayerAnnotation(
+            self.volume,
+            height_map,
+            name=name,
+            current_color=color,
+            visible=True,
+            z_value=0,
+        )
+        self.tree_item_index = None
 
     def redo(self):
         logger.debug(f"Redo: {self.text()}")
 
+        try:
+            # Add to EyeVolume
+            self.volume._layers.append(self.layer_annotation)
+
+            # Add in ViewTab - create TreeItem and store its index
+            # Note: appendRow handles beginInsertRows/endInsertRows internally
+            tree_item = itemmodel.TreeItem(data=self.layer_annotation)
+            self.model.appendRow(tree_item, parent=self.model.layers_index)
+
+            # Store the model index for later removal
+            if self.tree_item_index is None:
+                row = self.model.rowCount(self.model.layers_index) - 1
+                self.tree_item_index = self.model.index(row, 0, self.model.layers_index)
+
+            # Add to every slice annotations exist for
+            for index in self.model._annotations:
+                root_item = self.model._annotations[index]
+                layers_item_group = [
+                    c for c in root_item.childItems() if c.meta["name"] == "Layers"
+                ][0]
+                item = layeritem.LayerItem(
+                    data=self.layer_annotation, index=index, parent=layers_item_group
+                )
+                self.model.annotation_items[id(self.layer_annotation)][index] = item
+
+            self.model.annotations.update()
+        except Exception as e:
+            logger.error(f"Error in AddLayeritem.redo: {e}", exc_info=True)
+            raise
+
     def undo(self):
         logger.debug(f"Undo: {self.text()}")
+
+        try:
+            # Remove respective items from all Bscan scenes
+            scene_items = self.model.annotation_items.pop(id(self.layer_annotation), {})
+            for scene_item in scene_items.values():
+                if scene_item.scene():
+                    scene_item.scene().removeItem(scene_item)
+
+            # Remove from model tree
+            # Note: removeRows handles beginRemoveRows/endRemoveRows internally
+            if self.tree_item_index and self.tree_item_index.isValid():
+                self.model.removeRows(
+                    self.tree_item_index.row(), 1, self.model.layers_index
+                )
+
+            # Remove from EyeVolume
+            if self.layer_annotation in self.volume._layers:
+                self.volume._layers.remove(self.layer_annotation)
+
+            self.model.annotations.update()
+        except Exception as e:
+            logger.error(f"Error in AddLayeritem.undo: {e}", exc_info=True)
+            raise
 
 
 class DeleteLayeritem(QUndoCommand):
-    def __init__(self, parent=None):
+    def __init__(
+        self,
+        tree_item_model: "itemmodel.VolumeTreeItemModel",
+        layer_annotation: ep.EyeVolumeLayerAnnotation,
+        parent=None,
+    ):
         super().__init__(parent)
         self.setText("Delete Layer")
+        self.model = tree_item_model
+        self.layer_annotation = layer_annotation
+        self.volume = self.layer_annotation.volume
+
+        # Store the scene items before deletion
+        self.scene_items_data = {}
+        self.tree_item_index = None
 
     def redo(self):
         logger.debug(f"Redo: {self.text()}")
 
+        try:
+            # Store scene items before removing
+            if id(self.layer_annotation) in self.model.annotation_items:
+                self.scene_items_data = {}
+                for index, scene_item in self.model.annotation_items[
+                    id(self.layer_annotation)
+                ].items():
+                    # Store the index for later recreation
+                    self.scene_items_data[index] = {
+                        "index": index,
+                        "parent": scene_item.parentItem(),
+                    }
+
+            # Remove respective items from all Bscan scenes
+            scene_items = self.model.annotation_items.pop(id(self.layer_annotation), {})
+            for scene_item in scene_items.values():
+                if scene_item.scene():
+                    scene_item.scene().removeItem(scene_item)
+
+            # Find and store the tree item index before deletion
+            if self.tree_item_index is None:
+                layers_index = self.model.layers_index
+                for row in range(self.model.rowCount(layers_index)):
+                    idx = self.model.index(row, 0, layers_index)
+                    item = self.model.getItem(idx)
+                    if (
+                        hasattr(item, "annotation")
+                        and item.annotation == self.layer_annotation
+                    ):
+                        self.tree_item_index = idx
+                        break
+
+            # Remove from model tree
+            # Note: removeRows handles beginRemoveRows/endRemoveRows internally
+            if self.tree_item_index and self.tree_item_index.isValid():
+                self.model.removeRows(
+                    self.tree_item_index.row(), 1, self.model.layers_index
+                )
+
+            # Remove from EyeVolume
+            if self.layer_annotation in self.volume._layers:
+                self.volume._layers.remove(self.layer_annotation)
+
+            self.model.annotations.update()
+        except Exception as e:
+            logger.error(f"Error in DeleteLayeritem.redo: {e}", exc_info=True)
+            raise
+
     def undo(self):
         logger.debug(f"Undo: {self.text()}")
+
+        try:
+            # Add back to EyeVolume
+            self.volume._layers.append(self.layer_annotation)
+
+            # Add back to ViewTab
+            # Note: appendRow handles beginInsertRows/endInsertRows internally
+            tree_item = itemmodel.TreeItem(data=self.layer_annotation)
+            self.model.appendRow(tree_item, parent=self.model.layers_index)
+
+            # Recreate scene items for all slices
+            for index, item_data in self.scene_items_data.items():
+                parent = item_data["parent"]
+                item = layeritem.LayerItem(
+                    data=self.layer_annotation, index=index, parent=parent
+                )
+                self.model.annotation_items[id(self.layer_annotation)][index] = item
+
+            self.model.annotations.update()
+        except Exception as e:
+            logger.error(f"Error in DeleteLayeritem.undo: {e}", exc_info=True)
+            raise
+
+
+class ClearHeights(QUndoCommand):
+    def __init__(self, layeritem, start, end, parent=None):
+        super().__init__(parent)
+        self.setText("Clear Heights")
+
+        self.layeritem = layeritem
+        self.start = start
+        self.end = end
+        self.old_heights = None
+
+    def redo(self):
+        logger.debug(f"Redo: {self.text()}")
+        layer_item = self.layeritem
+        if self.old_heights is None:
+            self.old_heights = np.copy(
+                layer_item.height_map[int(self.start) : int(self.end)]
+            )
+        layer_item.height_map[int(self.start) : int(self.end)] = np.nan
+
+    def undo(self):
+        logger.debug(f"Undo: {self.text()}")
+        layer_item = self.layeritem
+        layer_item.height_map[int(self.start) : int(self.end)] = self.old_heights
+
+    def id(self):
+        return 6
+
+    def mergeWith(self, other: QUndoCommand) -> bool:
+        # Todo check the code below for correctness
+        return False
+        if self.layeritem != other.layeritem:
+            return False
+
+        # Extend the cleared region
+        self.start = min(self.start, other.start)
+        self.end = max(self.end, other.end)
+
+        # Combine old heights
+        new_old_heights = np.copy(self.old_heights)
+        start_index = int(other.start) - int(self.start)
+        end_index = start_index + len(other.old_heights)
+        if start_index < 0:
+            # Other command clears region before current command
+            prepend_length = -start_index
+            new_old_heights = np.concatenate(
+                (other.old_heights[:prepend_length], new_old_heights)
+            )
+            start_index = 0
+            end_index += prepend_length
+        if end_index > len(new_old_heights):
+            # Other command clears region after current command
+            append_length = end_index - len(new_old_heights)
+            new_old_heights = np.concatenate(
+                (new_old_heights, other.old_heights[-append_length:])
+            )
+        new_old_heights[start_index:end_index] = other.old_heights
+        self.old_heights = new_old_heights
+
+        return True
 
 
 class ChangePolygon(QUndoCommand):
@@ -53,11 +271,13 @@ class ChangePolygon(QUndoCommand):
         logger.debug(f"Redo: {self.text()}")
         self.polygon.start = self.new_start
         self.polygon.end = self.new_end
+        self.polygon.update()
 
     def undo(self):
         logger.debug(f"Undo: {self.text()}")
         self.polygon.start = self.old_start
         self.polygon.end = self.old_end
+        self.polygon.update()
 
     def id(self):
         return 3
@@ -77,9 +297,7 @@ class AddPolygon(QUndoCommand):
         self.start = start
         self.end = end
 
-        self.polygon = layeritem.PolygonPath(
-            None, self.layeritem.height_map, self.start, self.end
-        )
+        self.polygon = layeritem.PolygonPath(None, self.start, self.end)
 
         super().__init__(parent)
         self.setText("Add Layer Region")
@@ -101,33 +319,30 @@ class AddPolygon(QUndoCommand):
 
 class UpdateLayerArray(QUndoCommand):
     def __init__(self, bspline: "layeritem.CubicSpline", parent=None):
-        self.bspline = bspline
-
-        self.layeritem = None
-        self.mapping = None
-        self.old_mapping = None
-
         super().__init__(parent)
         self.setText("Update Layer Array")
 
+        self.bspline = bspline
+
+        self.layer_item = bspline.layer_item
+        self.mapping = {}
+        self.old_mapping = {}
+
     def redo(self):
         logger.debug(f"Redo: {self.text()}")
-        self.layeritem = (
-            self.bspline.layer_item if not self.layeritem else self.layeritem
-        )
         self.mapping = self.bspline.indices() if not self.mapping else self.mapping
         self.old_mapping = (
-            {x: self.layeritem.height_map[x] for x in self.mapping.keys()}
+            {x: self.layer_item.height_map[x] for x in self.mapping.keys()}
             if not self.old_mapping
             else self.old_mapping
         )
         for x in self.mapping:
-            self.layeritem.height_map[x] = self.mapping[x]
+            self.layer_item.height_map[x] = self.mapping[x]
 
     def undo(self):
         logger.debug(f"Undo: {self.text()}")
         for x in self.old_mapping:
-            self.layeritem.height_map[x] = self.old_mapping[x]
+            self.layer_item.height_map[x] = self.old_mapping[x]
 
     def id(self):
         return 4
@@ -142,130 +357,40 @@ class UpdateLayerArray(QUndoCommand):
 
 
 class MoveKnot(QUndoCommand):
-    def __init__(self, knot: QGraphicsItem, new_pos: QPointF, optimize_neighbours=True):
-        self.knot = knot
-        self.bspline = self.knot.bspline
-        self.index = self.bspline.knots.index(self.knot)
-        self.optimize_neighbours = optimize_neighbours
-
-        # Make sure knots ara x centered in pixel
-        new_pos.setX(np.floor(new_pos.x()) + 0.5)
-        self.new_pos = new_pos
-        self.old_pos = self.knot.center
+    def __init__(self, knot: "layeritem.CubicSplineKnotItem", new_pos: QPointF):
         super().__init__()
         self.setText("Move Knot")
 
-        # Create child command for optimizing control points
-        self.optimize_cps = OptimizeControlPoints(
-            self.knot, self.bspline, propagate=self.optimize_neighbours, parent=self
-        )
+        self.knot = knot
+        self.bspline = self.knot.bspline
+        self.index = self.bspline.knots.index(self.knot)
 
-        self.change_p1, self.change_p2 = None, None
-        self.deleted_polygon = None
-        (
-            left_neighbours,
-            right_neighbours,
-        ) = self.bspline.layer_item.get_neighbour_polygons(self.bspline)
-
-        if self.knot is self.bspline.knots[-1] and right_neighbours:
-            for n in right_neighbours:
-                # Find the closest neighbour that is not covered after the move
-                if n.end.x() >= self.new_pos.x():
-                    # Change the neighbour if the new pos is in its region
-                    if self.old_pos.x() == n.start.x() or self.new_pos in n:
-                        self.change_p1 = ChangePolygon(
-                            n, start=self.new_pos, parent=self
-                        )
-                    break
-                else:
-                    # Delete polygon if it is covered
-                    self.deleted_polygon = DeletePolygon(n, parent=self)
-
-        if self.knot is self.bspline.knots[0] and left_neighbours:
-            for n in left_neighbours:
-                # Find the closest neighbour that is not covered after the move
-                if n.start.x() <= self.new_pos.x():
-                    if self.old_pos.x() == n.end.x() or self.new_pos in n:
-                        self.change_p2 = ChangePolygon(n, end=self.new_pos, parent=self)
-                    break
-                else:
-                    self.deleted_polygon = DeletePolygon(n, parent=self)
-
-        self.update_array = UpdateLayerArray(self.bspline, parent=self)
-
-        self.added_polygon = None
-        if (
-            self.knot is self.bspline.knots[-1]
-            and self.new_pos.x() < self.old_pos.x()
-            and not self.change_p1
-        ):
-            self.added_polygon = AddPolygon(
-                self.bspline.layer_item,
-                start=self.new_pos,
-                end=self.old_pos,
-                parent=self,
-            )
-
-        if (
-            self.knot is self.bspline.knots[0]
-            and self.new_pos.x() > self.old_pos.x()
-            and not self.change_p2
-        ):
-            self.added_polygon = AddPolygon(
-                self.bspline.layer_item,
-                start=self.old_pos,
-                end=self.new_pos,
-                parent=self,
-            )
+        # Make sure knots are x centered in pixel
+        new_pos.setX(np.floor(new_pos.x()) + 0.5)
+        self.new_pos = new_pos
+        self.old_pos = self.knot.center
+        self.last_active_curve = self.bspline.layer_item.active_curve
 
     def redo(self) -> None:
         logger.debug(f"Redo: {self.text()}")
+        self.bspline.layer_item.active_curve = self.bspline
         self.knot.setPos(self.new_pos)
         self.knot.sync()
-        super().redo()
         self.knot.bspline.update()
-
-        if self.change_p1:
-            self.change_p1.polygon.update()
-        if self.change_p2:
-            self.change_p2.polygon.update()
-        if self.added_polygon:
-            self.bspline.layer_item.update()
 
     def undo(self) -> None:
         logger.debug(f"Undo: {self.text()}")
+        self.bspline.layer_item.active_curve = self.last_active_curve
         self.knot.setPos(self.old_pos)
         self.knot.sync()
-        super().undo()
         self.knot.bspline.update()
 
     def mergeWith(self, other: "MoveKnot") -> bool:
-        p1s = [c.polygon if c else None for c in [self.change_p1, other.change_p1]]
-        p2s = [c.polygon if c else None for c in [self.change_p2, other.change_p2]]
         # Do only merge if the same knot is moved
         if other.knot != self.knot:
             return False
-        # Do only merge if the new command does not delete a polygon
-        if not other.deleted_polygon is None:
-            return False
-        # Do only merge if the old command did not add a polygon
-        if not (self.added_polygon is None and other.added_polygon is None):
-            return False
-        # Do only merge if neighbouring polygons are the same or one of them is None
-        if not (p1s[0] is None or p1s[1] is None or p1s[0] is p1s[1]):
-            return False
-        if not (p2s[0] is None or p2s[1] is None or p2s[0] is p2s[1]):
-            return False
 
-        self.new_pos = other.new_pos
-
-        self.optimize_cps.mergeWith(other.optimize_cps)
-        if self.change_p1 and other.change_p1:
-            self.change_p1.mergeWith(other.change_p1)
-        if self.change_p2 and other.change_p2:
-            self.change_p2.mergeWith(other.change_p2)
-
-        self.update_array.mergeWith(other.update_array)
+        self.new_pos = other.new_ps
         return True
 
     def id(self):
@@ -278,7 +403,7 @@ class MoveControlKnot(QUndoCommand):
         self.knot = self.cp.parentItem()
         cp_in = self.knot.cp_in
         cp_out = self.knot.cp_out
-        self.other_cp = cp_in if not self.cp is cp_in else cp_out
+        self.other_cp = cp_in if self.cp is not cp_in else cp_out
 
         self.new_pos = new_pos
         self.old_pos = self.cp.pos()
@@ -333,17 +458,16 @@ class AddKnot(QUndoCommand):
         self,
         bspline: "layeritem.CubicSpline",
         pos: QPointF,
-        optimize_neighbours=True,
         parent=None,
     ):
+        super().__init__(parent)
+        self.setText("Add Knot")
+
         self.bspline = bspline
         self.layeritem = self.bspline.layer_item
 
         pos.setX(np.floor(pos.x()) + 0.5)
         self.pos = pos
-        self.optimize_neighbours = optimize_neighbours
-        super().__init__(parent)
-        self.setText("Add Knot")
 
         # Create new knot
         knot_dict = {
@@ -353,45 +477,14 @@ class AddKnot(QUndoCommand):
         }
 
         self.new_knot = layeritem.CubicSplineKnotItem(parent=None, knot_dict=knot_dict)
-
-        # Get insertion index ToDo: Replace with bisect insort when Pysid6 works on Python3.10
-        i = 0
-        for k in self.bspline._knots:
-            if knot_dict["knot_pos"][0] > k["knot_pos"][0]:
-                i += 1
-                continue
-            break
-        self.index = i
-        # Create child command for optimizing control points
-        OptimizeControlPoints(
-            self.new_knot, self.bspline, propagate=self.optimize_neighbours, parent=self
+        # Get insertion index for new knot in sorted knot list
+        self.index = bisect.bisect_left(
+            self.bspline._knots,
+            knot_dict["knot_pos"][0],
+            key=lambda x: x["knot_pos"][0],
         )
 
-        # Create child commands to change neighbouring polygons if necessary
-        left_neighbours, right_neighbours = self.layeritem.get_neighbour_polygons(
-            self.bspline
-        )
-        if self.index == len(self.bspline.knots) and right_neighbours:
-            for n in right_neighbours:
-                if self.pos in n:
-                    ChangePolygon(n, start=self.pos, parent=self)
-                    break
-                elif self.pos.x() < n.start.x():
-                    break
-                else:
-                    DeletePolygon(n, parent=self)
-
-        if self.index == 0 and left_neighbours:
-            for n in left_neighbours:
-                if self.pos in n:
-                    ChangePolygon(n, end=self.pos, parent=self)
-                    break
-                elif self.pos.x() > n.end.x():
-                    break
-                else:
-                    DeletePolygon(n, parent=self)
-
-        self.update_array = UpdateLayerArray(self.bspline, parent=self)
+        self.old_active_curve = self.layeritem.active_curve
 
     def redo(self) -> None:
         logger.debug(f"Redo: {self.text()}")
@@ -402,129 +495,84 @@ class AddKnot(QUndoCommand):
         if not self.bspline.control_points_visible:
             self.new_knot.hide_control_points()
 
-        self.new_knot.setFocus(Qt.MouseFocusReason)
-        super().redo()
+        self.new_knot.show()
+        self.layeritem.active_curve = self.bspline
         self.bspline.update()
 
     def undo(self) -> None:
         logger.debug(f"Undo: {self.text()}")
-        super().undo()
 
         self.new_knot.scene().removeItem(self.new_knot)
         self.bspline.knots.pop(self.index)
         self.bspline._knots.pop(self.index)
+
+        self.layeritem.active_curve = self.old_active_curve
         self.bspline.update()
 
 
 class DeleteKnot(QUndoCommand):
-    def __init__(self, knot: "layeritem.CubicSplineKnotItem", optimize_neighbours=True):
-        self.knot = knot
-        self.optimize_neighbours = optimize_neighbours
+    def __init__(self, knot: "layeritem.CubicSplineKnotItem"):
         super().__init__()
         self.setText("Delete Knot")
 
+        self.knot = knot
         self.bspline = self.knot.bspline
         self.layeritem = self.bspline.layer_item
         self.index = self.bspline.knots.index(self.knot)
 
-        left = self.bspline.knots[self.index - 1] if self.index - 1 > 0 else None
-        right = (
-            self.bspline.knots[self.index + 1]
-            if self.index + 1 < len(self.bspline.knots)
-            else None
-        )
-        if left and self.optimize_neighbours:
-            OptimizeControlPoints(left, self.bspline, propagate=False, parent=self)
-        if right and self.optimize_neighbours:
-            OptimizeControlPoints(right, self.bspline, propagate=False, parent=self)
-
-        neighbours = self.layeritem.get_neighbour_elements(self.bspline)
-        if len(self.bspline.knots) == 1:
-            # Delete Bspline object when last knot is removed
-            DeleteCurve(self.bspline, self)
-        elif self.knot is self.bspline.knots[0]:
-            p = (
-                neighbours[0]
-                if (neighbours[0] and neighbours[0].end == self.knot.center)
-                else None
-            )
-            if p:
-                ChangePolygon(p, end=self.bspline.knots[1].center, parent=self)
-        elif self.knot is self.bspline.knots[-1]:
-            p = (
-                neighbours[1]
-                if (neighbours[1] and neighbours[1].start == self.knot.center)
-                else None
-            )
-            if p:
-                ChangePolygon(p, start=self.bspline.knots[-2].center, parent=self)
-
     def redo(self) -> None:
         logger.debug(f"Redo: {self.text()}")
-        if len(self.bspline.knots) > 1:
-            self.bspline.scene().removeItem(self.knot)
-            self.bspline.knots.pop(self.index)
-            self.bspline._knots.pop(self.index)
-
-        super().redo()
-        self.bspline.update()
+        self.bspline.scene().removeItem(self.knot)
+        self.bspline.knots.pop(self.index)
+        self.bspline._knots.pop(self.index)
 
     def undo(self) -> None:
         logger.debug(f"Undo: {self.text()}")
-        super().undo()
-        # If Curve was not removed
-        if self.bspline.parentItem():
-            self.bspline.knots.insert(self.index, self.knot)
-            self.bspline._knots.insert(self.index, self.knot.knot_dict)
-            self.knot.setParentItem(self.bspline)
-
-            self.bspline.update()
+        self.bspline.knots.insert(self.index, self.knot)
+        self.bspline._knots.insert(self.index, self.knot.knot_dict)
+        self.knot.setParentItem(self.bspline)
 
 
 class DeleteCurve(QUndoCommand):
     def __init__(self, bspline: "layeritem.CubicSpline", parent=None):
+        super().__init__(parent)
+        self.setText("Delete Curve")
         self.bspline = bspline
         self.layeritem = bspline.layer_item
         self.index = self.layeritem.cubic_splines.index(self.bspline)
-
-        super().__init__(parent)
-        self.setText("Delete Knot")
-
-        # Rejoin Polygons
-        p1 = [
-            p for p in self.layeritem.polygons if p.end == self.bspline.knots[0].center
-        ]
-        p2 = [
-            p
-            for p in self.layeritem.polygons
-            if p.start == self.bspline.knots[-1].center
-        ]
-        if p1 and p2:
-            JoinPolygons(p1[0], p2[0], self)
+        self.curve_is_active = self.layeritem.active_curve is self.bspline
 
     def redo(self) -> None:
         logger.debug(f"Redo: {self.text()}")
+
+        # Remove curve from scene and lists
         self.layeritem.cubic_splines.pop(self.index)
         self.knots = self.layeritem.knots.pop(self.index)
         self.layeritem.scene().removeItem(self.bspline)
-
-        super().redo()
+        if self.curve_is_active:
+            self.layeritem.active_curve = None
 
     def undo(self) -> None:
         logger.debug(f"Undo: {self.text()}")
-        super().undo()
+
+        # Restore curve to scene and lists
         self.layeritem.cubic_splines.insert(self.index, self.bspline)
         self.layeritem.knots.insert(self.index, self.knots)
         self.bspline.setParentItem(self.layeritem)
+        if self.curve_is_active:
+            self.layeritem.active_curve = self.bspline
 
 
 class DeletePolygon(QUndoCommand):
-    def __init__(self, polygon: "layeritem.PolygonPath", parent=None):
+    def __init__(
+        self, polygon: "layeritem.PolygonPath", heights_to_nan=True, parent=None
+    ):
+        super().__init__(parent)
+        self.setText("Delete Polygon")
+
+        self.heights_to_nan = heights_to_nan
         self.polygon = polygon
         self.layeritem = self.polygon.layer_item
-
-        super().__init__(parent)
-        self.setText("Delete Layer Region")
 
         start, stop = self.polygon.x_region
         self.slice = np.s_[int(np.floor(start)) : int(np.ceil(stop))]
@@ -533,17 +581,16 @@ class DeletePolygon(QUndoCommand):
         logger.debug(f"Redo: {self.text()}")
         self.index = self.layeritem.polygons.index(self.polygon)
         self.layeritem.polygons.pop(self.index)
-        self.heights = np.copy(self.polygon.heights[self.slice])
-        self.polygon.heights[self.slice] = np.nan
+        if self.heights_to_nan:
+            self.heights = np.copy(self.polygon.heights[self.slice])
+            self.polygon.heights[self.slice] = np.nan
         self.layeritem.scene().removeItem(self.polygon)
-
-        super().redo()
 
     def undo(self) -> None:
         logger.debug(f"Undo: {self.text()}")
-        super().undo()
         self.layeritem.polygons.insert(self.index, self.polygon)
-        self.polygon.heights[self.slice] = self.heights
+        if self.heights_to_nan:
+            self.polygon.heights[self.slice] = self.heights
         self.polygon.setParentItem(self.layeritem)
 
 
@@ -551,92 +598,52 @@ class OptimizeControlPoints(QUndoCommand):
     def __init__(
         self,
         knot: "layeritem.CubicSplineKnotItem",
-        bspline: "layeritem.CubicSpline",
-        propagate=False,
         parent=None,
     ):
-        self.knot = knot
-        self.bspline = bspline
-
-        self.propagate = propagate
         super().__init__(parent)
         self.setText("Optimize Controllpoints")
 
+        self.knot = knot
+        self.bspline = self.knot.bspline
+
         self.in_pos, self.out_pos = None, None
         self.old_in_pos, self.old_out_pos = None, None
-        self.left, self.right = None, None
-        if self.propagate:
-            if not self.knot in self.bspline.knots:
-                knots = sorted(
-                    self.bspline.knots + [self.knot],
-                    key=lambda x: x.knot_dict["knot_pos"][0],
-                )
-            else:
-                knots = self.bspline.knots
-
-            index = knots.index(self.knot)
-            left = knots[index - 1] if index > 0 else None
-            right = knots[index + 1] if index < len(knots) - 1 else None
-
-            if left:
-                self.left = OptimizeControlPoints(
-                    left, self.bspline, propagate=False, parent=self
-                )
-            if right:
-                self.right = OptimizeControlPoints(
-                    right, self.bspline, propagate=False, parent=self
-                )
 
     def redo(self) -> None:
         logger.debug(f"Redo: {self.text()}")
-        if not self.old_in_pos:
-            self.old_in_pos, self.old_out_pos = (
-                self.knot.cp_in_pos,
-                self.knot.cp_out_pos,
-            )
-        if not self.in_pos:
-            self.in_pos, self.out_pos = self.bspline.optimize_controllpoints(self.knot)
+        self.old_in_pos, self.old_out_pos = (
+            self.knot.cp_in_pos,
+            self.knot.cp_out_pos,
+        )
+        self.in_pos, self.out_pos = self.bspline.optimize_controllpoints(self.knot)
 
         self.knot.cp_in = self.in_pos
         self.knot.cp_out = self.out_pos
-        super().redo()
+        self.bspline.update()
 
     def undo(self) -> None:
         logger.debug(f"Undo: {self.text()}")
         self.knot.cp_in = self.old_in_pos
         self.knot.cp_out = self.old_out_pos
-        super().undo()
+        self.bspline.update()
 
     def id(self) -> int:
         return 5
 
-    def mergeWith(self, other: QUndoCommand) -> bool:
-        if self.knot != other.knot:
-            return False
-        if not self.left and other.left:
-            return False
-        if not self.right and other.right:
-            return False
-
-        self.in_pos = other.in_pos
-        self.out_pos = other.out_pos
-
-        if self.propagate:
-            if self.left:
-                self.left.mergeWith(other.left)
-            if self.right:
-                self.right.mergeWith(other.right)
-        return True
-
 
 class AddCurve(QUndoCommand):
     def __init__(self, layer_item: "layeritem.LayerItem", pos: QPointF):
-        self.layeritem = layer_item
+        super().__init__()
+        self.setText("New Curve")
+
+        self.layer_item = layer_item
+
+        self.first_knot_index = pos.x()
+        self.first_knot_height = pos.y()
+        self.old_height = layer_item.height_map[int(self.first_knot_index)]
 
         pos.setX(np.floor(pos.x()) + 0.5)
         self.pos = pos
-        super().__init__()
-        self.setText("New Curve")
 
         knot_dict = {
             "knot_pos": (pos.x(), pos.y()),
@@ -644,52 +651,43 @@ class AddCurve(QUndoCommand):
             "cp_out_pos": (pos.x() + 10, pos.y()),
         }
 
-        self.knots = []
+        self.knots = [knot_dict]
         self.bspline = layeritem.CubicSpline(self.knots, None)
-        self.new_knot = layeritem.CubicSplineKnotItem(parent=None, knot_dict=knot_dict)
-
-        self.new_knot.setParentItem(self.bspline)
-        self.bspline._knots.append(self.new_knot.knot_dict)
-        self.bspline.knots.append(self.new_knot)
-
-        if not self.bspline.control_points_visible:
-            self.new_knot.hide_control_points()
+        self.new_knot = self.bspline.knots[0]
 
         # Get insertion index
         i = 0
-        for cs in self.layeritem.cubic_splines:
+        for cs in self.layer_item.cubic_splines:
             if self.new_knot.center.x() > cs.start.x():
                 i += 1
             else:
                 break
         self.index = i
 
-        # Split polygon if new Curve lies in it.
-        polygon = [p for p in self.layeritem.polygons if self.pos in p]
-        if polygon:
-            polygon = polygon[0]
-            SplitPolygons(polygon, self.pos, self)
-
-        self.update_array = UpdateLayerArray(self.bspline, parent=self)
+        self.last_active_curve = self.layer_item.active_curve
 
     def redo(self) -> None:
         logger.debug(f"Redo: {self.text()}")
-        self.bspline.setParentItem(self.layeritem)
-        self.layeritem.knots.insert(self.index, self.knots)
-        self.layeritem.cubic_splines.insert(self.index, self.bspline)
+        self.bspline.setParentItem(self.layer_item)
+        self.layer_item.knots.insert(self.index, self.knots)
+        self.layer_item.cubic_splines.insert(self.index, self.bspline)
 
-        self.new_knot.setFocus(Qt.MouseFocusReason)
+        # set height_map for first knot
+        self.layer_item.height_map[int(self.first_knot_index)] = self.first_knot_height
 
-        super().redo()
-        self.layeritem.update()
+        self.new_knot.show()
+        self.layer_item.active_curve = self.bspline
+        self.layer_item.update()
 
     def undo(self) -> None:
         logger.debug(f"Undo: {self.text()}")
-        super().undo()
         self.bspline.scene().removeItem(self.bspline)
-        self.layeritem.cubic_splines.pop(self.index)
-        self.layeritem.knots.pop(self.index)
-        self.layeritem.update()
+        self.layer_item.cubic_splines.pop(self.index)
+        self.layer_item.knots.pop(self.index)
+        # restore old height_map value
+        self.layer_item.height_map[int(self.first_knot_index)] = self.old_height
+        self.layer_item.active_curve = self.last_active_curve
+        self.layer_item.update()
 
 
 class SplitPolygons(QUndoCommand):
@@ -699,12 +697,8 @@ class SplitPolygons(QUndoCommand):
 
         self.layeritem = self.polygon.layer_item
         self.new_polygons = [
-            layeritem.PolygonPath(
-                None, self.polygon.heights, self.polygon.start, self.pos
-            ),
-            layeritem.PolygonPath(
-                None, self.polygon.heights, self.pos, self.polygon.end
-            ),
+            layeritem.PolygonPath(None, self.polygon.start, self.pos),
+            layeritem.PolygonPath(None, self.pos, self.polygon.end),
         ]
         self.index = self.layeritem.polygons.index(self.polygon)
         super().__init__(parent)
@@ -722,6 +716,8 @@ class SplitPolygons(QUndoCommand):
             + self.layeritem.polygons[self.index + 1 :]
         )
 
+        self.layeritem.update()
+
     def undo(self) -> None:
         logger.debug(f"Undo: {self.text()}")
         self.polygon.setParentItem(self.new_polygons[0].parentItem())
@@ -733,6 +729,7 @@ class SplitPolygons(QUndoCommand):
             + [self.polygon]
             + self.layeritem.polygons[self.index + 2 :]
         )
+        self.layeritem.update()
 
 
 class JoinPolygons(QUndoCommand):
@@ -742,7 +739,7 @@ class JoinPolygons(QUndoCommand):
         self.polygons = [p1, p2]
 
         self.layeritem = p1.layer_item
-        self.new_polygon = layeritem.PolygonPath(None, p1.heights, p1.start, p2.end)
+        self.new_polygon = layeritem.PolygonPath(None, p1.start, p2.end)
         self.index = self.layeritem.polygons.index(p1)
 
         super().__init__(parent)

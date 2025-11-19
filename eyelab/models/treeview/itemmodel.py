@@ -5,7 +5,7 @@ import eyepy as ep
 import numpy as np
 from eyepy.core.utils import DynamicDefaultDict
 from PySide6 import QtCore, QtWidgets
-from PySide6.QtCore import QAbstractItemModel, Qt
+from PySide6.QtCore import QAbstractItemModel
 
 from eyelab.dialogs import AddAnnotationDialog
 from eyelab.models.scene import CustomGraphicsScene
@@ -61,7 +61,8 @@ class TreeItemGroup:
         self.childItems.append(new_item)
 
     def removeChildren(self, row: int, count: int):
-        for i in range(row, row + count):
+        # Remove in reverse order to avoid index shifting issues
+        for i in range(row + count - 1, row - 1, -1):
             self.childItems.pop(i)
 
     def switchChildren(self, row1: int, row2: int):
@@ -125,7 +126,7 @@ class TreeItemModel(QtCore.QAbstractItemModel):
     def columnCount(self, parent=QtCore.QModelIndex(), *args, **kwargs):
         return self.tree_root.columnCount()
 
-    def data(self, index: QtCore.QModelIndex(), role=QtCore.Qt.EditRole):
+    def data(self, index: QtCore.QModelIndex, role=QtCore.Qt.EditRole):
         if role == QtCore.Qt.EditRole:
             item = self.getItem(index)
             return item.itemData
@@ -165,7 +166,7 @@ class TreeItemModel(QtCore.QAbstractItemModel):
                 return item
         return self.tree_root
 
-    def flags(self, index: QtCore.QModelIndex()):
+    def flags(self, index: QtCore.QModelIndex):
         if not index.isValid():
             return QtCore.Qt.NoItemFlags
 
@@ -221,13 +222,13 @@ class VolumeTreeItemModel(TreeItemModel):
         self._data = data
         self._current_slice = 0
 
-        if not "AreaSettings" in self._data.meta:
+        if "AreaSettings" not in self._data.meta:
             self._data.meta["AreaSettings"] = {
                 "visible": True,
                 "z_value": 0,
                 "name": "Areas",
             }
-        if not "LayerSettings" in self._data.meta:
+        if "LayerSettings" not in self._data.meta:
             self._data.meta["LayerSettings"] = {
                 "visible": True,
                 "z_value": 0,
@@ -235,7 +236,7 @@ class VolumeTreeItemModel(TreeItemModel):
             }
 
         for bscan in self._data.meta["bscan_meta"]:
-            if not "disabled" in bscan:
+            if "disabled" not in bscan:
                 bscan["disabled"] = False
 
         self._init_model()
@@ -252,18 +253,38 @@ class VolumeTreeItemModel(TreeItemModel):
         self.next_slice(None)
 
     def duplicate_volume(self, index: QtCore.QModelIndex):
+        """Duplicate a layer or area annotation with undo support."""
+        from eyelab.commands import layeritem as layer_commands
+        from eyelab.commands import get_undo_stack
+
         annotation = index.internalPointer().annotation
         name = annotation.name
         data = annotation.data
 
         if index.parent() == self.layers_index:
-            self.add_layer_annotation(name=f"Duplicate {name}", height_map=data)
+            # Use undo command for layer duplication
+            command = layer_commands.AddLayeritem(
+                self,
+                name=f"Duplicate {name}",
+                color=annotation.meta.get("current_color", "FF0000"),
+            )
+            # Override the layer annotation with duplicated data
+            command.layer_annotation = ep.EyeVolumeLayerAnnotation(
+                self._data,
+                data.copy(),  # Copy the height map
+                name=f"Duplicate {name}",
+                current_color=annotation.meta.get("current_color", "FF0000"),
+                visible=True,
+                z_value=0,
+            )
+            get_undo_stack("main").push(command)
         elif index.parent() == self.areas_index:
-            self.add_voxel_annotation(name=f"Duplicate {name}", voxel_map=data)
+            # Direct duplication for areas (no undo command yet)
+            self.add_pixel_annotation(name=f"Duplicate {name}", voxel_map=data)
 
     @property
     def scene(self) -> CustomGraphicsScene:
-        if not self.current_slice in self._scenes:
+        if self.current_slice not in self._scenes:
             # Create GraphicsScene if not yet created
             scene = CustomGraphicsScene(
                 parent=self, data=self._data[self.current_slice]
@@ -280,7 +301,7 @@ class VolumeTreeItemModel(TreeItemModel):
     def set_current_scene(self):
         if self.tool.paint_preview.scene() == self.scene:
             self.scene.removeItem(self.tool.paint_preview)
-        if not self.scene.mouseGrabberItem() is None:
+        if self.scene.mouseGrabberItem() is not None:
             self.tool.paint_preview.setParentItem(self.scene.mouseGrabberItem())
 
     def next_slice(self, current_tool):
@@ -293,7 +314,7 @@ class VolumeTreeItemModel(TreeItemModel):
                 self.current_slice = slice
                 break
 
-        if not self.scene.mouseGrabberItem() is None:
+        if self.scene.mouseGrabberItem() is not None:
             current_tool.paint_preview.setParentItem(self.scene.mouseGrabberItem())
 
     def last_slice(self, current_tool):
@@ -306,7 +327,7 @@ class VolumeTreeItemModel(TreeItemModel):
                 self.current_slice = slice
                 break
 
-        if not self.scene.mouseGrabberItem() is None:
+        if self.scene.mouseGrabberItem() is not None:
             current_tool.paint_preview.setParentItem(self.scene.mouseGrabberItem())
 
     def sync_annotations_to_tab(self):
@@ -355,14 +376,24 @@ class VolumeTreeItemModel(TreeItemModel):
         self.tree_root.appendChild(self.tree_layers)
 
     def add_annotation(self):
+        from eyelab.commands import layeritem as layer_commands
+        from eyelab.commands import get_undo_stack
+
+        def add_layer_with_undo(name):
+            command = layer_commands.AddLayeritem(self, name=name, color="FF0000")
+            get_undo_stack("main").push(command)
+
+        def add_pixel_direct(name):
+            self.add_pixel_annotation(name, color="FF0000")
+
         options = {
-            "Layers": self.add_layer_annotation,
-            "Areas": self.add_voxel_annotation,
+            "Layers": add_layer_with_undo,
+            "Areas": add_pixel_direct,
         }
         dialog = AddAnnotationDialog(self, options)
         if dialog.exec_() == QtWidgets.QDialog.Accepted:
-            self.layoutChanged.emit()
-            self.annotations.update()
+            # No need to emit layoutChanged here - the undo command handles it
+            pass
 
     def _items_from_index(self, index):
         item = self.getItem(index)
@@ -375,24 +406,40 @@ class VolumeTreeItemModel(TreeItemModel):
     def remove_annotation(self, index):
         """Remove annotation from eyevolume, all scenes and the overview"""
         if index.isValid():
-            self.layoutAboutToBeChanged.emit()
-            item = self.getItem(index)
-            # Remove respective items from all Bscan scenes
-            eyevolume_annotation = item.annotation
-            scene_items = self.annotation_items.pop(id(eyevolume_annotation))
-            for scene_item in scene_items.values():
-                scene_item.scene().removeItem(scene_item)
-                del scene_item
-            # Remove from EyeVolume
-            for annotations in [self._data._volume_maps, self._data._layers]:
-                if eyevolume_annotation in annotations:
-                    annotations.remove(eyevolume_annotation)
+            from eyelab.commands import layeritem as layer_commands
+            from eyelab.commands import get_undo_stack
 
-            self.removeRows(index.row(), 1, index.parent())
-            self.layoutChanged.emit()
-            self.annotations.update()
+            item = self.getItem(index)
+            eyevolume_annotation = item.annotation
+
+            # Check if it's a layer annotation using isinstance
+            if isinstance(eyevolume_annotation, ep.EyeVolumeLayerAnnotation):
+                # This is a layer annotation - use undo command
+                command = layer_commands.DeleteLayeritem(self, eyevolume_annotation)
+                get_undo_stack("main").push(command)
+            else:
+                # This is a voxel/area annotation - use direct deletion
+                self.layoutAboutToBeChanged.emit()
+                # Remove respective items from all Bscan scenes
+                scene_items = self.annotation_items.pop(id(eyevolume_annotation))
+                for scene_item in scene_items.values():
+                    scene_item.scene().removeItem(scene_item)
+                    del scene_item
+                # Remove from EyeVolume
+                for annotations in [self._data._volume_maps, self._data._layers]:
+                    if eyevolume_annotation in annotations:
+                        annotations.remove(eyevolume_annotation)
+
+                self.removeRows(index.row(), 1, index.parent())
+                self.layoutChanged.emit()
+                self.annotations.update()
 
     def add_layer_annotation(self, name, height_map=None, color="FF0000"):
+        """Add a layer annotation directly without undo support.
+
+        Note: For user-initiated actions with undo support, use add_annotation() instead.
+        This method is kept for programmatic use (e.g., loading from file, duplication).
+        """
         # Add to EyeVolume
         layer = self._data.add_layer_annotation(height_map=height_map, name=name)
         layer.meta = {
@@ -412,25 +459,26 @@ class VolumeTreeItemModel(TreeItemModel):
             item = LayerItem(data=layer, index=index, parent=layers_item_group)
             self.annotation_items[id(layer)][index] = item
 
-    def add_voxel_annotation(self, name, voxel_map=None, color="FF0000"):
+        return layer
+
+    def add_pixel_annotation(self, name, pixel_map=None, color="FF0000"):
         # Add to EyeVolume
-        voxel_map = self._data.add_voxel_annotation(voxel_map=voxel_map, name=name)
-        voxel_map.meta = {
+        pixel_map = self._data.add_pixel_annotation(voxel_map=pixel_map, name=name)
+        pixel_map.meta = {
             **{"visible": True, "z_value": 0, "current_color": color},
-            **voxel_map.meta,
+            **pixel_map.meta,
         }
 
         # Add in ViewTab - update
-        self.appendRow(TreeItem(data=voxel_map), parent=self.areas_index)
-
+        self.appendRow(TreeItem(data=pixel_map), parent=self.areas_index)
         # Add to every slice annotations exist for
         for index in self._annotations:
             root_item = self._annotations[index]
             areas_item_group = [
                 c for c in root_item.childItems() if c.meta["name"] == "Areas"
             ][0]
-            item = AreaItem(data=voxel_map, index=index, parent=areas_item_group)
-            self.annotation_items[id(voxel_map)][index] = item
+            item = AreaItem(data=pixel_map, index=index, parent=areas_item_group)
+            self.annotation_items[id(pixel_map)][index] = item
 
     def _get_annotations(self, index):
         root_item = ItemGroup(meta={})
@@ -460,7 +508,7 @@ class EnfaceTreeItemModel(TreeItemModel):
 
         self._data = data
 
-        if not "AreaSettings" in self._data.meta:
+        if "AreaSettings" not in self._data.meta:
             self._data.meta["AreaSettings"] = {
                 "visible": True,
                 "z_value": 0,

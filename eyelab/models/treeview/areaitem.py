@@ -83,25 +83,53 @@ class AreaItem(QtWidgets.QGraphicsPixmapItem):
         self.view().tool.mouse_move_handler(self, event)
         event.accept()
 
+    def _qbitmap_to_numpy(self, qbitmap):
+        """Convert QBitmap to numpy boolean array.
+
+        In QBitmap: color0 (white/0) is background, color1 (black/1) is foreground.
+        We want to return True where we should paint (where QBitmap is black/1).
+        """
+        from PySide6.QtGui import QImage
+
+        qimage = qbitmap.toImage()
+        # Convert to RGB format for compatibility with qimage2ndarray
+        qimage = qimage.convertToFormat(QImage.Format_RGB32)
+
+        arr = qimage2ndarray.rgb_view(qimage).astype(bool)
+        # Extract first channel (R) and transpose to get (width, height) shape
+        # Invert: we want True where pixels are black (0), False where they're white (255)
+        result = ~arr[:, :, 0].T
+        return result
+
     def add_pixels(self, pos, mask):
+        # Convert QBitmap to numpy array if necessary
+        if isinstance(mask, QtGui.QBitmap):
+            mask = self._qbitmap_to_numpy(mask)
+
         size_x, size_y = mask.shape
-        offset_x = pos.x() - (size_x - 1) / 2
-        offset_y = pos.y() - (size_y - 1) / 2
+        # Center the brush on the position (same as preview offset)
+        offset_x = pos.x() - size_x / 2
+        offset_y = pos.y() - size_y / 2
 
         for ix, iy in np.ndindex(mask.shape):
             if mask[ix, iy]:
                 self.alpha_array[int(offset_y + iy), int(offset_x + ix)] = 255.0
                 self.slice[int(offset_y + iy), int(offset_x + ix)] = True
 
-        self.update_pixmap()
+        self.set_data()
 
     def remove_pixels(self, pos, mask):
+        # Convert QBitmap to numpy array if necessary
+        if isinstance(mask, QtGui.QBitmap):
+            mask = self._qbitmap_to_numpy(mask)
+
         size_x, size_y = mask.shape
-        offset_x = pos.x() - (size_x - 1) / 2
-        offset_y = pos.y() - (size_y - 1) / 2
+        # Center the brush on the position (same as preview offset)
+        offset_x = pos.x() - size_x / 2
+        offset_y = pos.y() - size_y / 2
         for ix, iy in np.ndindex(mask.shape):
             if mask[ix, iy]:
                 self.alpha_array[int(offset_y + iy), int(offset_x + ix)] = 0.0
                 self.slice[int(offset_y + iy), int(offset_x + ix)] = False
 
-        self.update_pixmap()
+        self.set_data()
