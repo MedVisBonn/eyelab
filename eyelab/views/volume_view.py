@@ -103,8 +103,14 @@ class VolumeView(CustomGraphicsView):
         for bscan in self.data:
             scale = np.array([self.data.localizer.scale_x, self.data.localizer.scale_y])
 
-            start = bscan.meta["start_pos"] / scale
-            end = bscan.meta["end_pos"] / scale
+            if self.data.localizer.scale_unit == "°":
+                # if the scale is in degrees, we need to offset by 15 since 0° is at the center
+                offset = np.array([15, 15])
+                start = (bscan.meta["start_pos"] + offset) / scale
+                end = (bscan.meta["end_pos"] + offset) / scale
+            else:
+                start = bscan.meta["start_pos"] / scale
+                end = bscan.meta["end_pos"] / scale
 
             p1 = Point(*start)
             p2 = Point(*end)
