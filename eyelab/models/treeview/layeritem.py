@@ -1133,7 +1133,7 @@ class LayerItem(QGraphicsPathItem):
         stack.push(layer_commands.OptimizeControlPoints(add_knot_command.new_knot))
 
         # Optimize control points of neighbouring knots
-        if len(bspline.knots) > 2:
+        if len(bspline.knots) >= 2:
             right_index = (
                 bisect.bisect_left(bspline.knots, pos.x(), key=lambda x: x.center.x())
                 + 1
