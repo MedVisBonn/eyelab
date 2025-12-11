@@ -921,8 +921,6 @@ class LayerItem(QGraphicsPathItem):
             self.polygons + [layer_element], key=lambda x: (x.start.x(), x.end.x())
         )
         index = elements.index(layer_element)
-        print(index, [(e.start.x(), e.end.x()) for e in elements])
-        # print(elements[:index][::-1], elements[index + 1 :])
         return elements[:index][::-1], elements[index + 1 :]
 
     @property
@@ -1127,7 +1125,12 @@ class LayerItem(QGraphicsPathItem):
     def _add_knot_macro(self, bspline, pos: QPointF):
         stack = get_undo_stack("main")
         stack.beginMacro("Add Knot")
-        stack.push(layer_commands.AddKnot(bspline, pos))
+        # Instantiate command first to access the new knot
+        add_knot_command = layer_commands.AddKnot(bspline, pos)
+        stack.push(add_knot_command)
+
+        # Optimize the new knot
+        stack.push(layer_commands.OptimizeControlPoints(add_knot_command.new_knot))
 
         # Optimize control points of neighbouring knots
         if len(bspline.knots) > 2:

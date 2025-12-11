@@ -325,6 +325,7 @@ dependencies = [
     { name = "pyside6" },
     { name = "qimage2ndarray" },
     { name = "requests" },
+    { name = "tabulate" },
 ]
 
 [package.dev-dependencies]
@@ -340,11 +341,12 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "eyepy", specifier = ">=0.18.1" },
+    { name = "eyepy", specifier = ">=0.19.2" },
     { name = "imagecodecs", specifier = ">=2025.8.2" },
     { name = "pyside6", specifier = ">=6.10.0" },
     { name = "qimage2ndarray", specifier = ">=1.10.0" },
     { name = "requests", specifier = ">=2.32.5" },
+    { name = "tabulate", specifier = ">=0.9.0" },
 ]
 
 [package.metadata.requires-dev]
@@ -360,7 +362,7 @@ dev = [
 
 [[package]]
 name = "eyepy"
-version = "0.18.1"
+version = "0.19.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "construct" },
@@ -369,9 +371,9 @@ dependencies = [
     { name = "numpy" },
     { name = "scikit-image" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c9/7c/a8c03186da2bc9e95c5e438b7f382c56270aca4e2aabd92b6f946f0d33a1/eyepy-0.18.1.tar.gz", hash = "sha256:fbaa3c7aa6f52e29b819659a9a561bb3e65364421cbf8912e3d24040885739e5", size = 74206, upload-time = "2025-11-11T14:11:49.886Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/28/2a/c0dc4c0c209e2f79e80d3a07f64513d8dde7409cd0e53cd5733c5a83d7a7/eyepy-0.19.2.tar.gz", hash = "sha256:3726bdbd55d4acda32f96cbc1bfa2fa5931d499d1f56ef103880c1a75a92fe5e", size = 75554, upload-time = "2025-12-11T09:29:19.158Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/eb/df/228320d11bafaf6aafcd7953a41a9e2496f4fb42872206e10cd22727b9ce/eyepy-0.18.1-py3-none-any.whl", hash = "sha256:c7f18323af1a950b04baad5b58f11b37bf5ccffb8cf1a5efd0611843cb20ef5d", size = 86384, upload-time = "2025-11-11T14:11:48.171Z" },
+    { url = "https://files.pythonhosted.org/packages/fb/fc/72eaf9ce5c873579cac7d3a8855a039bfde891756d0a6553a432e71c56f7/eyepy-0.19.2-py3-none-any.whl", hash = "sha256:80d251b3238604d6f57b0147c7ee756b70809ab93ad91c486c292ac65a0b2346", size = 88069, upload-time = "2025-12-11T09:29:17.564Z" },
 ]
 
 [[package]]
@@ -1329,6 +1331,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/94/e7/b2c673351809dca68a0e064b6af791aa332cf192da575fd474ed7d6f16a2/six-1.17.0.tar.gz", hash = "sha256:ff70335d468e7eb6ec65b95b99d3a2836546063f63acc5171de367e834932a81", size = 34031, upload-time = "2024-12-04T17:35:28.174Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b7/ce/149a00dd41f10bc29e5921b496af8b574d8413afcd5e30dfa0ed46c2cc5e/six-1.17.0-py2.py3-none-any.whl", hash = "sha256:4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274", size = 11050, upload-time = "2024-12-04T17:35:26.475Z" },
+]
+
+[[package]]
+name = "tabulate"
+version = "0.9.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/ec/fe/802052aecb21e3797b8f7902564ab6ea0d60ff8ca23952079064155d1ae1/tabulate-0.9.0.tar.gz", hash = "sha256:0095b12bf5966de529c0feb1fa08671671b3368eec77d7ef7ab114be2c068b3c", size = 81090, upload-time = "2022-10-06T17:21:48.54Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/40/44/4a5f08c96eb108af5cb50b41f76142f0afa346dfa99d5296fe7202a11854/tabulate-0.9.0-py3-none-any.whl", hash = "sha256:024ca478df22e9340661486f85298cff5f6dcdba14f3813e8830015b9ed1948f", size = 35252, upload-time = "2022-10-06T17:21:44.262Z" },
 ]
 
 [[package]]
